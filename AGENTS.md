@@ -1,53 +1,53 @@
-# The Project Management MVP web app
+# Aplicación de Gestión de Proyectos MVP
 
-## Business Requirements
+## Requisitos de Negocio
 
-This project is building a Project Management App. Key features:
-- A user can sign in
-- When signed in, the user sees a Kanban board representing their project
-- The Kanban board has fixed columns that can be renamed
-- The cards on the Kanban board can be moved with drag and drop, and edited
-- There is an AI chat feature in a sidebar; the AI is able to create / edit / move one or more cards
+Este proyecto está construyendo una Aplicación de Gestión de Proyectos. Características principales:
+- Un usuario puede iniciar sesión
+- Cuando inicia sesión, el usuario ve un tablero Kanban que representa su proyecto
+- El tablero Kanban tiene columnas fijas que se pueden renombrar
+- Las tarjetas del tablero Kanban se pueden mover con arrastrar y soltar, y editar
+- Hay una característica de chat con IA en la barra lateral; la IA puede crear / editar / mover una o más tarjetas
 
-## Limitations
+## Limitaciones
 
-For the MVP, there will only be a user sign in (hardcoded to 'user' and 'password') but the database will support multiple users for future.
+Para el MVP, solo habrá un inicio de sesión de usuario (codificado como 'user' y 'password'), pero la base de datos admitirá múltiples usuarios en el futuro.
 
-For the MVP, there will only be 1 Kanban board per signed in user.
+Para el MVP, solo habrá 1 tablero Kanban por usuario que inicie sesión.
 
-For the MVP, this will run locally (in a docker container)
+Para el MVP, esto se ejecutará localmente (en un contenedor docker)
 
-## Technical Decisions
+## Decisiones Técnicas
 
-- NextJS frontend
-- Python FastAPI backend, including serving the static NextJS site at /
-- Everything packaged into a Docker container
-- Use "uv" as the package manager for python in the Docker container
-- Use OpenRouter for the AI calls. An OPENROUTER_API_KEY is in .env in the project root
-- Use `openai/gpt-oss-120b` as the model
-- Use SQLLite local database for the database, creating a new db if it doesn't exist
-- Start and Stop server scripts for Mac, PC, Linux in scripts/
+- Frontend NextJS
+- Backend Python FastAPI, incluyendo servir el sitio estático NextJS en /
+- Todo empaquetado en un contenedor Docker
+- Usar "uv" como gestor de paquetes para python en el contenedor Docker
+- Usar OpenRouter para las llamadas de IA. Una OPENROUTER_API_KEY está en .env en la raíz del proyecto
+- Usar `openai/gpt-oss-120b:free` como modelo
+- Usar base de datos SQLLite local, creando una nueva bd si no existe
+- Scripts de inicio y parada del servidor para Mac, PC, Linux en scripts/
 
-## Starting Point
+## Punto de Partida
 
-A working MVP of the frontend has been built and is already in frontend. This is not yet designed for the Docker setup. It's a pure frontend-only demo.
+Un MVP funcional del frontend ya ha sido construido y está en frontend. Esto aún no está diseñado para la configuración de Docker. Es una demostración puramente frontend.
 
-## Color Scheme
+## Esquema de Color
 
-- Accent Yellow: `#ecad0a` - accent lines, highlights
-- Blue Primary: `#209dd7` - links, key sections
-- Purple Secondary: `#753991` - submit buttons, important actions
-- Dark Navy: `#032147` - main headings
-- Gray Text: `#888888` - supporting text, labels
+- Amarillo Acentuado: `#ecad0a` - líneas acentuadas, destacados
+- Azul Primario: `#209dd7` - enlaces, secciones clave
+- Púrpura Secundario: `#753991` - botones de envío, acciones importantes
+- Azul Marino Oscuro: `#032147` - títulos principales
+- Texto Gris: `#888888` - texto de apoyo, etiquetas
 
-## Coding standards
+## Estándares de Codificación
 
-1. Use latest versions of libraries and idiomatic approaches as of today
-2. Keep it simple - NEVER over-engineer, ALWAYS simplify, NO unnecessary defensive programming. No extra features - focus on simplicity.
-3. Be concise. Keep README minimal. IMPORTANT: no emojis ever
-4. When hitting issues, always identify root cause before trying a fix. Do not guess. Prove with evidence, then fix the root cause.
+1. Usar las últimas versiones de librerías y enfoques idiomáticos a partir de hoy
+2. Mantenerlo simple - NUNCA sobre-ingenierizar, SIEMPRE simplificar, NO hay programación defensiva innecesaria. Sin características extra - enfócate en la simplicidad.
+3. Ser conciso. Mantener README mínimo. IMPORTANTE: nunca emojis
+4. Cuando encuentres problemas, siempre identifica la causa raíz antes de intentar una solución. No adivines. Prueba con evidencia, luego corrige la causa raíz.
 
-## Working documentation
+## Documentación de Trabajo
 
-All documents for planning and executing this project will be in the docs/ directory.
-Please review the docs/PLAN.md document before proceeding.
+Todos los documentos para planificación y ejecución de este proyecto estarán en el directorio docs/.
+Por favor revisa el documento docs/PLAN.md antes de continuar.

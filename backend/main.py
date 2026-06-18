@@ -4,6 +4,9 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from pathlib import Path
 import secrets
+import os
+
+from backend.db import init_db, load_board, save_board
 
 app = FastAPI(title="Project Management MVP Backend")
 
@@ -11,9 +14,12 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 FRONTEND_DIR = STATIC_DIR / "frontend"
 INDEX_FILE = STATIC_DIR / "index.html"
 
+def get_db_path():
+    return os.environ.get("KANBAN_DB_PATH")
+
 # Simulated users and sessions
 VALID_CREDENTIALS = {"usuario": "contraseña"}
-sessions: dict[str, str] = {}
+sessions = {}
 
 class LoginRequest(BaseModel):
     username: str
@@ -23,6 +29,14 @@ class LoginResponse(BaseModel):
     username: str
     token: str
 
+class BoardData(BaseModel):
+    columns: list
+    cards: dict
+
+@app.on_event("startup")
+def startup_event() -> None:
+    init_db(get_db_path())
+
 @app.get("/api/health")
 def health() -> dict:
     return {"status": "ok"}
@@ -30,6 +44,16 @@ def health() -> dict:
 @app.get("/api/ping")
 def ping() -> dict:
     return {"message": "pong"}
+
+@app.get("/api/board")
+def get_board() -> BoardData:
+    board = load_board(get_db_path())
+    return board
+
+@app.post("/api/board")
+def update_board(board: BoardData) -> dict:
+    save_board(board.dict(), get_db_path())
+    return {"status": "ok", "message": "Board updated"}
 
 @app.post("/api/auth/login")
 def login(request: LoginRequest) -> LoginResponse:

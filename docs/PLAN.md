@@ -64,10 +64,10 @@ Crear un MVP funcional de gestión de proyectos con:
 
 ## Parte 5: Modelado de la Base de Datos
 
-- [ ] Definir un esquema JSON para la base de datos del tablero Kanban
-- [ ] Incluir entidades: usuarios, tableros, columnas, tarjetas y conversación IA
-- [ ] Guardar el esquema en `docs/db-schema.json`
-- [ ] Documentar el modelo en `docs/` con ejemplos de uso
+- [x] Definir un esquema JSON para la base de datos del tablero Kanban
+- [x] Incluir entidades: usuarios, tableros, columnas, tarjetas y conversación IA
+- [x] Guardar el esquema en `docs/db-schema.json`
+- [x] Documentar el modelo en `docs/` con ejemplos de uso
 
 ## Parte 6: API Backend de Kanban
 

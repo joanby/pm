@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Kanban Project Management Schema",
+  "type": "object",
+  "properties": {
+    "users": {
+      "type": "array",
+      "description": "Usuarios con acceso al tablero",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "UUID o token de usuario" },
+          "username": { "type": "string" },
+          "passwordHash": { "type": "string", "description": "Hash simulado o almacenado" },
+          "displayName": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "username", "passwordHash"]
+      }
+    },
+    "boards": {
+      "type": "array",
+      "description": "Lista de tableros disponibles para los usuarios",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "ID de tablero" },
+          "userId": { "type": "string", "description": "Propietario principal" },
+          "title": { "type": "string", "description": "Nombre del tablero" },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "description": "ID de columna" },
+                "title": { "type": "string" },
+                "position": { "type": "integer", "description": "Orden de la columna" },
+                "cards": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string", "description": "ID de tarjeta" },
+                      "title": { "type": "string" },
+                      "details": { "type": "string" },
+                      "status": { "type": "string", "description": "Estado opcional para filtrado" },
+                      "createdAt": { "type": "string", "format": "date-time" },
+                      "updatedAt": { "type": "string", "format": "date-time" }
+                    },
+                    "required": ["id", "title"]
+                  }
+                }
+              },
+              "required": ["id", "title", "position", "cards"]
+            }
+          }
+        },
+        "required": ["id", "userId", "title", "columns"]
+      }
+    },
+    "conversations": {
+      "type": "array",
+      "description": "Historial de interacción con el chat IA",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "ID de conversación" },
+          "userId": { "type": "string" },
+          "boardId": { "type": "string" },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": { "type": "string", "enum": ["user", "assistant", "system"] },
+                "text": { "type": "string" },
+                "createdAt": { "type": "string", "format": "date-time" }
+              },
+              "required": ["role", "text", "createdAt"]
+            }
+          },
+          "lastUpdatedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "userId", "boardId", "messages"]
+      }
+    }
+  },
+  "required": ["users", "boards", "conversations"]
+}

@@ -2,15 +2,15 @@
 
 Parte 1: Planificación
 
-Enriquezca este documento para planificar cada una de estas partes en detalle, con subpasos enumerados en una lista de verificación que el agente deberá marcar, e incluyendo pruebas y criterios de éxito para cada uno. Cree también un archivo AGENTS.md dentro del directorio frontend que describa el código existente. Asegúrese de que el usuario revise y apruebe el plan.
+Enriquece este documento para planificar cada una de estas partes en detalle, con subpasos enumerados en una lista de verificación que el agente deberá marcar, e incluyendo pruebas y criterios de éxito para cada uno. Crea también un archivo AGENTS.md dentro del directorio frontend que describa el código existente. Asegúrate de que el usuario revise y apruebe el plan.
 
 Parte 2: Estructura
 
-Configure la infraestructura de Docker, el backend en backend/ con FastAPI y escriba los scripts de inicio y parada en el directorio scripts/. Esto debería servir un ejemplo de HTML estático para confirmar que un ejemplo de "hola mundo" funciona correctamente en local y también realizar una llamada a la API.
+Configura la infraestructura de Docker, el backend en backend/ con FastAPI y escribe los scripts de inicio y parada en el directorio scripts/. Esto debería servir un ejemplo de HTML estático para confirmar que un ejemplo de "hola mundo" funciona correctamente en local y también realizar una llamada a la API.
 
 Parte 3: Integración del frontend
 
-Actualice el código para que el frontend se compile y sirva de forma estática, de modo que la aplicación muestre el tablero Kanban de demostración en /. Realice pruebas unitarias y de integración exhaustivas.
+Actualiza el código para que el frontend se compile y sirva de forma estática, de modo que la aplicación muestre el tablero Kanban de demostración en /. Realice pruebas unitarias y de integración exhaustivas.
 
 Parte 4: Añadir una experiencia de inicio de sesión simulada
 

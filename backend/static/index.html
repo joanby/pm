@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project Management MVP</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 0; padding: 2rem; background: #f6f7fb; color: #111827; }
+      main { max-width: 720px; margin: 0 auto; background: white; border-radius: 24px; padding: 2rem; box-shadow: 0 24px 80px rgba(22, 28, 45, 0.08); }
+      code { background: #eef2ff; padding: 0.2rem 0.4rem; border-radius: 0.35rem; }
+      .badge { display: inline-flex; gap: 0.5rem; align-items: center; padding: 0.5rem 0.75rem; background: #e0f2fe; border-radius: 9999px; color: #0369a1; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="badge">Backend FastAPI + Docker</p>
+      <h1>Project Management MVP</h1>
+      <p>Esta página está sirviendo contenido estático desde FastAPI.</p>
+      <p>Prueba la API de ping desde el mismo servidor:</p>
+      <pre><code>GET /api/ping</code></pre>
+      <button id="pingButton">Llamar a /api/ping</button>
+      <p id="response"></p>
+    </main>
+    <script>
+      document.getElementById('pingButton').addEventListener('click', async () => {
+        const responseElement = document.getElementById('response');
+        responseElement.textContent = 'Consultando...';
+
+        try {
+          const res = await fetch('/api/ping');
+          const data = await res.json();
+          responseElement.textContent = JSON.stringify(data, null, 2);
+        } catch (error) {
+          responseElement.textContent = 'Error: ' + error;
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+__pycache__
+*.py[cod]
+*.pyo
+*.pyd
+.env
+.git
+.gitignore
+frontend/node_modules
+frontend/.next
+frontend/.git
+docs
+test-results
+**/__pycache__
+**/*.py[cod]

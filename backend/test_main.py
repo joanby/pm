@@ -15,7 +15,9 @@ if ROOT_ENV_PATH.exists():
             os.environ.setdefault(key, value.strip())
 
 from fastapi.testclient import TestClient
+from .ai import parse_ai_response
 from .main import app
+from .openrouter import OpenRouterError
 
 
 def setup_module() -> None:
@@ -67,3 +69,59 @@ def test_ai_validation_reaches_openrouter() -> None:
     body = response.json()
     assert body["model"] == "openai/gpt-oss-120b:free"
     assert "4" in body["answer"]
+
+
+def test_ai_chat_returns_structured_response_from_openrouter() -> None:
+    with TestClient(app) as client:
+        board = client.get("/api/board").json()
+        response = client.post(
+            "/api/ai/chat",
+            json={
+                "message": "Reply with message exactly 'ok'. Do not change the board.",
+                "board": board,
+                "history": [],
+            },
+        )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["message"].lower() == "ok"
+    assert body["boardUpdate"] is None
+
+
+def test_parse_ai_response_rejects_invalid_json() -> None:
+    try:
+        parse_ai_response("not json")
+    except OpenRouterError as exc:
+        assert "valid JSON" in str(exc)
+    else:
+        raise AssertionError("Expected invalid JSON to be rejected")
+
+
+def test_parse_ai_response_rejects_missing_message() -> None:
+    try:
+        parse_ai_response('{"boardUpdate": null}')
+    except OpenRouterError as exc:
+        assert "expected schema" in str(exc)
+    else:
+        raise AssertionError("Expected invalid schema to be rejected")
+
+
+def test_parse_ai_response_rejects_invalid_board_update() -> None:
+    try:
+        parse_ai_response(
+            """
+            {
+              "message": "updated",
+              "boardUpdate": {
+                "columns": [
+                  {"id": "col-1", "title": "Todo", "cardIds": ["missing-card"]}
+                ],
+                "cards": {}
+              }
+            }
+            """
+        )
+    except OpenRouterError as exc:
+        assert "expected schema" in str(exc)
+    else:
+        raise AssertionError("Expected invalid boardUpdate to be rejected")

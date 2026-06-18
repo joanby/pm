@@ -7,7 +7,9 @@ from pathlib import Path
 import secrets
 import os
 
+from backend.ai import AiChatRequest, AiChatResponse, request_structured_ai_response
 from backend.db import init_db, load_board, save_board
+from backend.main_models import BoardData
 from backend.openrouter import OPENROUTER_MODEL, OpenRouterError, call_openrouter
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -40,11 +42,6 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     username: str
     token: str
-
-
-class BoardData(BaseModel):
-    columns: list
-    cards: dict
 
 
 class AiValidationResponse(BaseModel):
@@ -97,6 +94,18 @@ def validate_ai() -> AiValidationResponse:
     except OpenRouterError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
     return AiValidationResponse(model=OPENROUTER_MODEL, answer=answer)
+
+
+@app.post("/api/ai/chat")
+def chat_with_ai(request: AiChatRequest) -> AiChatResponse:
+    try:
+        response = request_structured_ai_response(request)
+    except OpenRouterError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+    if response.boardUpdate is not None:
+        save_board(response.boardUpdate.model_dump(), get_db_path())
+    return response
 
 # Mount Next.js static files if they exist
 if FRONTEND_DIR.exists():

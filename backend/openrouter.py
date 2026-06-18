@@ -1,5 +1,5 @@
 import os
-from typing import Any
+from typing import Any, Optional
 
 import httpx
 
@@ -19,13 +19,16 @@ def get_openrouter_api_key() -> str:
     return api_key
 
 
-def call_openrouter(prompt: str) -> str:
+def call_openrouter_messages(messages: list[dict[str, str]], response_format: Optional[dict[str, Any]] = None) -> str:
     payload: dict[str, Any] = {
         "model": OPENROUTER_MODEL,
-        "messages": [{"role": "user", "content": prompt}],
+        "messages": messages,
         "temperature": 0,
-        "max_tokens": 16,
+        "max_tokens": 1200,
     }
+    if response_format is not None:
+        payload["response_format"] = response_format
+
     headers = {
         "Authorization": f"Bearer {get_openrouter_api_key()}",
         "Content-Type": "application/json",
@@ -50,3 +53,9 @@ def call_openrouter(prompt: str) -> str:
     if not isinstance(content, str) or not content.strip():
         raise OpenRouterError("OpenRouter response content was empty")
     return content.strip()
+
+
+def call_openrouter(prompt: str) -> str:
+    return call_openrouter_messages(
+        [{"role": "user", "content": prompt}],
+    )

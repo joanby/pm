@@ -102,10 +102,10 @@ Crear un MVP funcional de gestión de proyectos con:
 
 ## Parte 9: Llamadas IA Estructuradas
 
-- [ ] Enviar el JSON completo del tablero al backend junto con el prompt y el historial
-- [ ] Definir un esquema de salida estructurada con al menos `message` y opcionalmente `boardUpdate`
-- [ ] Validar la respuesta y actualizar el tablero si es necesario
-- [ ] Añadir pruebas para respuestas válidas y casos de error
+- [x] Enviar el JSON completo del tablero al backend junto con el prompt y el historial
+- [x] Definir un esquema de salida estructurada con al menos `message` y opcionalmente `boardUpdate`
+- [x] Validar la respuesta y actualizar el tablero si es necesario
+- [x] Añadir pruebas para respuestas válidas y casos de error
 
 ## Parte 10: Widget de Chat IA en la UI
 

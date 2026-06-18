@@ -13,11 +13,21 @@ Crear un MVP funcional de gestión de proyectos con:
 ## Criterios de éxito
 
 - La aplicación se construye y se sirve desde el backend en local
-- El acceso a `/` requiere un inicio de sesión simulado con `usuario` / `contraseña`
-- El tablero Kanban se guarda y se carga desde el backend
+- El backend expone `/api/board` para leer y actualizar el tablero Kanban
+- El tablero Kanban se guarda en SQLite y se recarga correctamente al refrescar
+- El backend sirve el frontend exportado de NextJS en `/`
 - El backend puede hacer una llamada básica a OpenRouter
 - El chat IA puede recibir el tablero y devolver una respuesta estructurada
 - Pruebas unitarias con al menos 80% de cobertura y pruebas de integración robustas
+
+## Decisiones de diseño aplicadas
+
+- FastAPI maneja la API en `/api/*` y monta los archivos estáticos del frontend en `/`
+- El tablero se persiste en SQLite en `backend/kanban.db` por defecto
+- La ruta de base de datos puede sobrescribirse con `KANBAN_DB_PATH`
+- El frontend carga el tablero con `fetch('/api/board')` y guarda cambios con `POST /api/board`
+- Se usó Docker multi-stage para compilar el frontend y empacar los archivos exportados en el backend
+- El contenedor debe reconstruirse después de cambios en backend/frontend para evitar usar código antiguo
 
 ## Parte 1: Planificación
 
@@ -71,17 +81,17 @@ Crear un MVP funcional de gestión de proyectos con:
 
 ## Parte 6: API Backend de Kanban
 
-- [ ] Implementar rutas para leer y actualizar el tablero Kanban
-- [ ] Crear o inicializar SQLite si no existe
-- [ ] Añadir endpoints de autenticación simulada
-- [ ] Escribir pruebas unitarias del backend y de la lógica de persistencia
+- [x] Implementar rutas para leer y actualizar el tablero Kanban
+- [x] Crear o inicializar SQLite si no existe
+- [x] Añadir endpoints de autenticación simulada
+- [x] Escribir pruebas unitarias del backend y de la lógica de persistencia
 
 ## Parte 7: Integración Frontend + Backend
 
-- [ ] Cambiar el frontend para cargar el tablero desde el backend
-- [ ] Guardar cambios de columnas y tarjetas vía API
-- [ ] Mantener sincronización de estado entre UI y backend
-- [ ] Escribir pruebas de integración para los flujos CRUD
+- [x] Cambiar el frontend para cargar el tablero desde el backend
+- [x] Guardar cambios de columnas y tarjetas vía API
+- [x] Mantener sincronización de estado entre UI y backend
+- [x] Escribir pruebas de integración para los flujos CRUD
 
 ## Parte 8: Conectividad con IA
 

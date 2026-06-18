@@ -4,8 +4,15 @@ import os
 from .db import DB_PATH_ENV
 
 TEST_DB_PATH = Path(__file__).resolve().parent / "test-kanban.db"
+ROOT_ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
 
 os.environ[DB_PATH_ENV] = str(TEST_DB_PATH)
+
+if ROOT_ENV_PATH.exists():
+    for line in ROOT_ENV_PATH.read_text().splitlines():
+        key, separator, value = line.partition("=")
+        if separator and key == "OPENROUTER_API_KEY":
+            os.environ.setdefault(key, value.strip())
 
 from fastapi.testclient import TestClient
 from .main import app
@@ -51,3 +58,12 @@ def test_board_update_endpoint() -> None:
 
         read_back = client.get("/api/board").json()
     assert read_back["columns"][0]["title"] == "Backlog Updated"
+
+
+def test_ai_validation_reaches_openrouter() -> None:
+    with TestClient(app) as client:
+        response = client.get("/api/ai/validate")
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["model"] == "openai/gpt-oss-120b:free"
+    assert "4" in body["answer"]

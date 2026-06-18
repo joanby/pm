@@ -9,7 +9,9 @@ RUN npm run build
 # Stage 2: Backend with static frontend
 FROM python:3.12-slim
 WORKDIR /app
-RUN python -m pip install --no-cache-dir fastapi uvicorn[standard]
+RUN python -m pip install --no-cache-dir uv
+COPY backend/pyproject.toml /app/backend/pyproject.toml
+RUN uv pip install --system --no-cache /app/backend
 
 COPY backend /app/backend
 COPY --from=frontend-builder /frontend/out /app/backend/static/frontend

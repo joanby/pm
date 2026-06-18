@@ -95,10 +95,10 @@ Crear un MVP funcional de gestión de proyectos con:
 
 ## Parte 8: Conectividad con IA
 
-- [ ] Implementar cliente OpenRouter en el backend
-- [ ] Probar la conectividad con un prompt de validación simple (`2+2`)
-- [ ] Validar el uso de `OPENROUTER_API_KEY`
-- [ ] Añadir pruebas de la lógica de llamada a IA
+- [x] Implementar cliente OpenRouter en el backend
+- [x] Probar la conectividad con un prompt de validación simple (`2+2`)
+- [x] Validar el uso de `OPENROUTER_API_KEY`
+- [x] Añadir pruebas de la lógica de llamada a IA
 
 ## Parte 9: Llamadas IA Estructuradas
 

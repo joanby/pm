@@ -1,13 +1,12 @@
 # Kanban Studio
 
-## Run
+## Ejecutar
 
 ```bash
 npm install
 npm run dev
 ```
-
-## Tests
+## Pruebas
 
 ```bash
 npm run test:unit

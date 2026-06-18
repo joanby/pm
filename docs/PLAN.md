@@ -109,10 +109,10 @@ Crear un MVP funcional de gestión de proyectos con:
 
 ## Parte 10: Widget de Chat IA en la UI
 
-- [ ] Añadir un panel lateral de chat en el frontend
-- [ ] Enviar mensajes del usuario al backend y mostrar respuestas de IA
-- [ ] Aplicar automáticamente `boardUpdate` si la IA propone cambios
-- [ ] Escribir pruebas E2E para el flujo de chat y actualización del tablero
+- [x] Añadir un panel lateral de chat en el frontend
+- [x] Enviar mensajes del usuario al backend y mostrar respuestas de IA
+- [x] Aplicar automáticamente `boardUpdate` si la IA propone cambios
+- [x] Escribir pruebas E2E para el flujo de chat y actualización del tablero
 
 ## Aseguramiento de calidad
 

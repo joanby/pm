@@ -25,6 +25,20 @@ describe("KanbanBoard API integration", () => {
       if (url === "/api/board" && options?.method === "POST") {
         return { ok: true, json: async () => ({ status: "ok" }) };
       }
+      if (url === "/api/ai/chat" && options?.method === "POST") {
+        return {
+          ok: true,
+          json: async () => ({
+            message: "He actualizado el tablero.",
+            boardUpdate: {
+              columns: [
+                { id: "col-backlog", title: "AI Backlog", cardIds: ["card-1"] },
+              ],
+              cards: mockBoard.cards,
+            },
+          }),
+        };
+      }
       return { ok: false };
     }) as any;
   });
@@ -47,5 +61,16 @@ describe("KanbanBoard API integration", () => {
     await userEvent.type(input, "Updated backlog");
     expect((input as HTMLInputElement).value).toBe("Updated backlog");
     expect(global.fetch).toHaveBeenCalledWith("/api/board", expect.any(Object));
+  });
+
+  it("applies board updates returned by ai chat", async () => {
+    render(<KanbanBoard />);
+    await waitFor(() => expect(screen.getByText("Kanban Studio")).toBeInTheDocument());
+
+    await userEvent.type(screen.getByLabelText("Mensaje para la IA"), "Renombra la primera columna");
+    await userEvent.click(screen.getByRole("button", { name: /enviar/i }));
+
+    await waitFor(() => expect(screen.getByDisplayValue("AI Backlog")).toBeInTheDocument());
+    expect(screen.getByText("He actualizado el tablero.")).toBeInTheDocument();
   });
 });

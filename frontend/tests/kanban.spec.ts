@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { initialData } from "../src/lib/kanban";
 
 test.beforeEach(async ({ page }) => {
+  await page.request.post("/api/board", { data: initialData });
+
   // Login before each test
   await page.goto("/");
   const usernameInput = page.locator("input#username");

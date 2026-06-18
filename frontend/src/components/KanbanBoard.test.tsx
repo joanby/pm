@@ -19,6 +19,9 @@ describe("KanbanBoard", () => {
       if (url === "/api/board" && options?.method === "POST") {
         return { ok: true, json: async () => ({ status: "ok" }) };
       }
+      if (url === "/api/ai/chat" && options?.method === "POST") {
+        return { ok: true, json: async () => ({ message: "ok", boardUpdate: null }) };
+      }
       return { ok: false };
     }) as any;
   });
@@ -66,5 +69,16 @@ describe("KanbanBoard", () => {
 
     expect(within(column).queryByText("New card")).not.toBeInTheDocument();
     expect(global.fetch).toHaveBeenCalledWith("/api/board", expect.any(Object));
+  });
+
+  it("shows ai chat responses", async () => {
+    render(<KanbanBoard />);
+    await waitFor(() => expect(screen.getByText("Kanban Studio")).toBeInTheDocument());
+
+    await userEvent.type(screen.getByLabelText("Mensaje para la IA"), "Di ok");
+    await userEvent.click(screen.getByRole("button", { name: /enviar/i }));
+
+    await waitFor(() => expect(screen.getByText("ok")).toBeInTheDocument());
+    expect(global.fetch).toHaveBeenCalledWith("/api/ai/chat", expect.any(Object));
   });
 });

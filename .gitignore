@@ -59,6 +59,8 @@ cover/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+backend/kanban.db
+backend/test-kanban.db
 
 # Flask stuff:
 instance/

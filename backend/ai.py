@@ -123,6 +123,16 @@ def build_ai_messages(request: AiChatRequest) -> list[dict[str, str]]:
     return messages
 
 
+MAX_AI_ATTEMPTS = 3
+
+
 def request_structured_ai_response(request: AiChatRequest) -> AiChatResponse:
-    content = call_openrouter_messages(build_ai_messages(request), AI_RESPONSE_SCHEMA)
-    return parse_ai_response(content)
+    messages = build_ai_messages(request)
+    last_error: OpenRouterError
+    for _ in range(MAX_AI_ATTEMPTS):
+        try:
+            content = call_openrouter_messages(messages, AI_RESPONSE_SCHEMA)
+            return parse_ai_response(content)
+        except OpenRouterError as exc:
+            last_error = exc
+    raise last_error

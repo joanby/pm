@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -16,11 +16,18 @@ import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
 import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
 
-export const KanbanBoard = () => {
+type KanbanBoardProps = {
+  token: string;
+};
+
+const RENAME_SAVE_DEBOUNCE_MS = 500;
+
+export const KanbanBoard = ({ token }: KanbanBoardProps) => {
   const [board, setBoard] = useState<BoardData>(() => initialData);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const renameSaveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -33,7 +40,10 @@ export const KanbanBoard = () => {
   useEffect(() => {
     const loadBoard = async () => {
       try {
-        const response = await fetch("/api/board");
+        const response = await fetch("/api/board", {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (!response.ok) {
           throw new Error("No se pudo cargar el tablero");
         }
@@ -46,13 +56,24 @@ export const KanbanBoard = () => {
       }
     };
     loadBoard();
+  }, [token]);
+
+  useEffect(() => {
+    return () => {
+      if (renameSaveTimeout.current) {
+        clearTimeout(renameSaveTimeout.current);
+      }
+    };
   }, []);
 
   const saveBoard = async (nextBoard: BoardData) => {
     try {
       const response = await fetch("/api/board", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(nextBoard),
       });
       if (!response.ok) {
@@ -91,12 +112,20 @@ export const KanbanBoard = () => {
   };
 
   const handleRenameColumn = (columnId: string, title: string) => {
-    updateBoardState({
+    const nextBoard = {
       ...board,
       columns: board.columns.map((column) =>
         column.id === columnId ? { ...column, title } : column
       ),
-    });
+    };
+    setBoard(nextBoard);
+
+    if (renameSaveTimeout.current) {
+      clearTimeout(renameSaveTimeout.current);
+    }
+    renameSaveTimeout.current = setTimeout(() => {
+      void saveBoard(nextBoard);
+    }, RENAME_SAVE_DEBOUNCE_MS);
   };
 
   const handleAddCard = (columnId: string, title: string, details: string) => {
@@ -220,7 +249,7 @@ export const KanbanBoard = () => {
             </DragOverlay>
           </DndContext>
 
-          <AiChatPanel board={board} onBoardUpdate={handleAiBoardUpdate} />
+          <AiChatPanel board={board} onBoardUpdate={handleAiBoardUpdate} token={token} />
         </div>
       </main>
     </div>

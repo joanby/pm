@@ -23,7 +23,7 @@ describe("KanbanBoard", () => {
         return { ok: true, json: async () => ({ message: "ok", boardUpdate: null }) };
       }
       return { ok: false };
-    }) as any;
+    }) as unknown as typeof fetch;
   });
 
   afterEach(() => {
@@ -31,22 +31,25 @@ describe("KanbanBoard", () => {
   });
 
   it("renders five columns", async () => {
-    render(<KanbanBoard />);
+    render(<KanbanBoard token="test-token" />);
     await waitFor(() => expect(screen.getAllByTestId(/column-/i)).toHaveLength(5));
   });
 
   it("renames a column", async () => {
-    render(<KanbanBoard />);
+    render(<KanbanBoard token="test-token" />);
     const column = await waitFor(() => getFirstColumn());
     const input = within(column).getByLabelText("Column title");
     await userEvent.clear(input);
     await userEvent.type(input, "New Name");
     expect(input).toHaveValue("New Name");
-    expect(global.fetch).toHaveBeenCalledWith("/api/board", expect.any(Object));
+    await waitFor(
+      () => expect(global.fetch).toHaveBeenCalledWith("/api/board", expect.any(Object)),
+      { timeout: 1000 }
+    );
   });
 
   it("adds and removes a card", async () => {
-    render(<KanbanBoard />);
+    render(<KanbanBoard token="test-token" />);
     const column = await waitFor(() => getFirstColumn());
     const addButton = within(column).getByRole("button", {
       name: /add a card/i,
@@ -72,7 +75,7 @@ describe("KanbanBoard", () => {
   });
 
   it("shows ai chat responses", async () => {
-    render(<KanbanBoard />);
+    render(<KanbanBoard token="test-token" />);
     await waitFor(() => expect(screen.getByText("Kanban Studio")).toBeInTheDocument());
 
     await userEvent.type(screen.getByLabelText("Mensaje para la IA"), "Di ok");

@@ -16,16 +16,21 @@ type AiChatResponse = {
 type AiChatPanelProps = {
   board: BoardData;
   onBoardUpdate: (board: BoardData) => void;
+  token: string;
 };
 
 const sendAiChat = async (
   message: string,
   board: BoardData,
-  history: ChatMessage[]
+  history: ChatMessage[],
+  token: string
 ) => {
   const response = await fetch("/api/ai/chat", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify({
       message,
       board,
@@ -40,7 +45,7 @@ const sendAiChat = async (
   return (await response.json()) as AiChatResponse;
 };
 
-export const AiChatPanel = ({ board, onBoardUpdate }: AiChatPanelProps) => {
+export const AiChatPanel = ({ board, onBoardUpdate, token }: AiChatPanelProps) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -60,12 +65,7 @@ export const AiChatPanel = ({ board, onBoardUpdate }: AiChatPanelProps) => {
     setIsSending(true);
 
     try {
-      let data: AiChatResponse;
-      try {
-        data = await sendAiChat(message, board, messages);
-      } catch {
-        data = await sendAiChat(message, board, messages);
-      }
+      const data = await sendAiChat(message, board, messages, token);
       setMessages([...nextMessages, { role: "assistant", content: data.message }]);
       if (data.boardUpdate) {
         onBoardUpdate(data.boardUpdate);

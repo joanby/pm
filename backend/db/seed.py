@@ -1,13 +1,7 @@
 import json
-import os
-import sqlite3
 from datetime import datetime
-from pathlib import Path
-from typing import Any
 
-DB_FILENAME = "kanban.db"
-DB_PATH_ENV = "KANBAN_DB_PATH"
-DEFAULT_DB_PATH = Path(__file__).resolve().parent / DB_FILENAME
+from backend.db.connection import get_connection
 
 DEFAULT_BOARD = {
     "columns": [
@@ -70,20 +64,6 @@ DEFAULT_USER = {
 }
 
 DEFAULT_CONVERSATIONS = []  # type: list[dict]
-
-
-def get_db_path(path=None):
-    if path is None:
-        return DEFAULT_DB_PATH
-    return Path(path)
-
-
-def get_connection(path=None):
-    db_path = get_db_path(path)
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(db_path, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    return conn
 
 
 def init_db(path=None):
@@ -153,32 +133,5 @@ def init_db(path=None):
                 ),
             )
 
-    conn.commit()
-    conn.close()
-
-
-def load_board(path=None):
-    conn = get_connection(path)
-    cursor = conn.cursor()
-    row = cursor.execute("SELECT data FROM boards WHERE id = ?", ("board-1",)).fetchone()
-    conn.close()
-    if row is None:
-        raise RuntimeError("Board data not found")
-    return json.loads(row["data"])
-
-
-def save_board(board, path=None):
-    conn = get_connection(path)
-    cursor = conn.cursor()
-    updated_at = datetime.utcnow().isoformat() + "Z"
-    cursor.execute(
-        "UPDATE boards SET data = ?, updated_at = ? WHERE id = ?",
-        (json.dumps(board), updated_at, "board-1"),
-    )
-    if cursor.rowcount == 0:
-        cursor.execute(
-            "INSERT INTO boards (id, user_id, data, updated_at) VALUES (?, ?, ?, ?)",
-            ("board-1", DEFAULT_USER["id"], json.dumps(board), updated_at),
-        )
     conn.commit()
     conn.close()

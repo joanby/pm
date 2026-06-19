@@ -2,7 +2,14 @@ import { expect, test } from "@playwright/test";
 import { initialData } from "../src/lib/kanban";
 
 test.beforeEach(async ({ page }) => {
-  await page.request.post("/api/board", { data: initialData });
+  const loginResponse = await page.request.post("/api/auth/login", {
+    data: { username: "usuario", password: "contraseña" },
+  });
+  const { token } = await loginResponse.json();
+  await page.request.post("/api/board", {
+    data: initialData,
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
   await page.goto("/");
   await page.locator("input#username").fill("usuario");

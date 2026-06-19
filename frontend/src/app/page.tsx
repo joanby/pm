@@ -29,7 +29,7 @@ export default function Home() {
       >
         Cerrar sesión
       </button>
-      <KanbanBoard />
+      <KanbanBoard token={session.token} />
     </div>
   );
 }

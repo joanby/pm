@@ -40,7 +40,7 @@ describe("KanbanBoard API integration", () => {
         };
       }
       return { ok: false };
-    }) as any;
+    }) as unknown as typeof fetch;
   });
 
   afterEach(() => {
@@ -48,23 +48,26 @@ describe("KanbanBoard API integration", () => {
   });
 
   it("loads board data from the backend", async () => {
-    render(<KanbanBoard />);
+    render(<KanbanBoard token="test-token" />);
     await waitFor(() => expect(screen.getByText("Kanban Studio")).toBeInTheDocument());
     expect(screen.getByText("Test card")).toBeInTheDocument();
   });
 
   it("saves changes after renaming a column", async () => {
-    render(<KanbanBoard />);
+    render(<KanbanBoard token="test-token" />);
     await waitFor(() => expect(screen.getByText("Kanban Studio")).toBeInTheDocument());
     const input = screen.getByLabelText("Column title");
     await userEvent.clear(input);
     await userEvent.type(input, "Updated backlog");
     expect((input as HTMLInputElement).value).toBe("Updated backlog");
-    expect(global.fetch).toHaveBeenCalledWith("/api/board", expect.any(Object));
+    await waitFor(
+      () => expect(global.fetch).toHaveBeenCalledWith("/api/board", expect.any(Object)),
+      { timeout: 1000 }
+    );
   });
 
   it("applies board updates returned by ai chat", async () => {
-    render(<KanbanBoard />);
+    render(<KanbanBoard token="test-token" />);
     await waitFor(() => expect(screen.getByText("Kanban Studio")).toBeInTheDocument());
 
     await userEvent.type(screen.getByLabelText("Mensaje para la IA"), "Renombra la primera columna");

@@ -59,7 +59,10 @@ export const useAuth = () => {
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: session ? { Authorization: `Bearer ${session.token}` } : undefined,
+      });
     } catch {
       // Ignore errors on logout
     } finally {
@@ -67,7 +70,7 @@ export const useAuth = () => {
       localStorage.removeItem("auth_session");
       setIsLoading(false);
     }
-  }, []);
+  }, [session]);
 
   return { session, isLoading, error, login, logout };
 };

@@ -1,120 +1,139 @@
-# Revisión de código — Proyecto PM Kanban MVP
+# Code Review: Project Management MVP
 
-Fecha: 2026-06-19
-Alcance: todo el repositorio (`backend/`, `frontend/`, `docs/`, Docker, scripts). Revisión estática de código + verificación activa de algunos hallazgos (git, eslint).
+Revision completa del codigo realizada el 2026-06-19.
 
-## Resumen ejecutivo
+---
 
-El código es coherente con lo descrito en `docs/PLAN.md` y todas las pruebas existentes pasan (ver `Pruebas` más abajo). No se encontraron vulnerabilidades de inyección (SQL parametrizado en `db.py`, no hay `eval`/`exec`, React escapa el contenido por defecto). Los hallazgos más importantes eran:
+## Resumen
 
-1. Un fichero binario de base de datos (`backend/kanban.db`) está commiteado en git.
-2. `npm run lint` falla actualmente (2 errores de ESLint) — el comando documentado no está en verde.
-3. La autorización del backend es puramente decorativa: el token de login nunca se valida en ningún endpoint.
+Proyecto MVP funcional con frontend NextJS (React 19), backend FastAPI, persistencia SQLite,
+integración con OpenRouter para chat IA, y Docker multi-stage. La arquitectura general es
+solida y bien organizada. A continuacion se detallan hallazgos por area.
 
-**Actualización (2026-06-19): todos los hallazgos de severidad Alta (H1-H3) y Media (M1-M3) han sido corregidos y verificados con la suite de pruebas completa (backend + frontend + E2E). Ver detalle de la corrección en cada hallazgo más abajo.** Los hallazgos de severidad Baja (L1-L7) siguen pendientes y no bloquean el uso del MVP.
+---
 
-**Actualización 2 (2026-06-19): el backend se reorganizó de ficheros monolíticos (`main.py`, `db.py`, `test_main.py`) a paquetes por responsabilidad (`backend/routers/`, `backend/db/`, `backend/tests/`).** Las referencias a número de línea en los hallazgos de abajo corresponden a la estructura *previa* a esa reorganización; el contenido y el estado de cada hallazgo siguen siendo válidos, pero la ubicación exacta puede haber cambiado de fichero. Ver `backend/AGENTS.md` y `CLAUDE.md` para la estructura actual. De camino, la reorganización de `db.py` eliminó el import sin usar `Any` mencionado en L1 (esa parte de L1 ya no aplica; `backend/ai.py` sigue teniéndolo).
+## Backend (Python/FastAPI)
 
-## Hallazgos
+### Fortalezas
 
-### Alto
+- **Buena separacion por responsabilidad**: `routers/` para endpoints, `db/` para persistencia,
+  `main.py` solo ensambla. Coherente con `backend/AGENTS.md`.
+- **Uso correcto de `lifespan`** para `init_db` en lugar del patron `@app.on_event` deprecado.
+- **`model_validator` en `BoardData`** (`main_models.py:20-29`) valida que todas las tarjetas
+  referenciadas existan y no haya duplicados. Excelente para integridad.
+- **Dependencia `require_auth` via `Depends()`** correctamente implementada y reutilizada en
+  `board.py` y `ai.py`.
+- **Reintentos en llamadas IA** (`ai.py:129-138`) con `MAX_AI_ATTEMPTS=3` y manejo de errores
+  JSON con `parse_ai_response`.
+- **Aislamiento de BD en tests** (`conftest.py:19-27`) con fixture `_isolated_db` que crea y
+  destruye `test-kanban.db` en cada test.
 
-> **Estado: corregido.**
+### Problemas
 
-**H1. `backend/kanban.db` está versionado en git**
-- Confirmado: `git ls-files | grep kanban.db` lo lista; commit `78a4b45` lo introdujo.
-- Riesgo: cada ejecución local/test modifica el fichero binario, generando diffs ruidosos y conflictos de merge; además persiste en el historial cualquier dato de tablero guardado durante desarrollo o pruebas manuales.
-- Acción: añadir `backend/kanban.db` y `backend/test-kanban.db` a `.gitignore`, ejecutar `git rm --cached backend/kanban.db`.
-- ✅ Hecho: ambas rutas añadidas a `.gitignore`, fichero desindexado con `git rm --cached`. El fichero sigue existiendo en disco (la app funciona igual), solo deja de versionarse.
+| Severidad | Archivo | Lineas | Problema |
+|-----------|---------|--------|----------|
+| **Alto** | `db/seed.py` | 58-64 | Contraseña almacenada en texto plano en campo `password_hash`. Usar `hashlib.sha256` o renombrar a `password` para evitar confusion. |
+| **Medio** | `routers/auth.py` | 12 | `sessions` es un dict en memoria: no persiste tras reinicio, no expira, no escala a multi-worker. Documentar como limitacion conocida. |
+| **Medio** | `db/boards.py` | 1-6 | `save_board` importa `DEFAULT_USER` de `seed.py` (linea 5). Mejor mover constantes a `connection.py` o `config.py`. |
+| **Bajo** | `board.py` | 16 | `POST /api/board` reemplaza todo el tablero. OK para MVP monousuario, pero no soporta actualizaciones parciales ni concurrencia. |
+| **Bajo** | `ai.py` | 26-85 | `AI_RESPONSE_SCHEMA` es un dict manual que duplica la definicion de `BoardData`. Podria derivarse con `BoardData.model_json_schema()`. |
+| **Bajo** | `routers/board.py` | 17 | `board.model_dump()` sin `by_alias=True` -- no hay alias definidos, pero consistencia. |
+| **Info** | N/A | - | No hay limit de tamano de body en requests. FastAPI no lo impone por defecto. |
 
-**H2. `npm run lint` falla en este momento**
-- Verificado ejecutando el comando: 2 errores `@typescript-eslint/no-explicit-any`.
-  - `frontend/src/components/KanbanBoard.test.tsx:26` — `global.fetch = vi.fn(...) as any`
-  - `frontend/src/components/KanbanBoard.integration.test.tsx:43` — mismo patrón
-- Riesgo: el comando de lint documentado (y previsiblemente cualquier CI futuro que lo use) no pasa hoy.
-- Acción: tipar el mock como `as unknown as typeof fetch` en lugar de `any` en ambos ficheros.
-- ✅ Hecho: `npm run lint` pasa sin errores.
+---
 
-**H3. Ningún endpoint del backend valida el token de sesión**
-- `backend/main.py:74-82` genera un token y lo guarda en `sessions = {}` (línea 34), pero ningún endpoint (`/api/board` GET/POST, `/api/ai/chat`, `/api/ai/validate`) comprueba `Authorization` ni ese diccionario. El "login" sólo controla qué se muestra en el frontend (`useAuth` en `frontend/src/lib/auth.ts`); el backend está completamente abierto.
-- Riesgo: aceptable mientras la app se ejecute sólo en `localhost`, pero `docker-compose.yml:6` publica el puerto `80:8000` sin restringir a `127.0.0.1` — si el contenedor se expone en una red no confiable, cualquiera puede leer/escribir el tablero y disparar llamadas a OpenRouter (coste/cuota) sin autenticarse.
-- Acción: añadir una dependencia FastAPI que valide `Authorization: Bearer <token>` contra `sessions` en las rutas de tablero/IA, o documentar explícitamente que el despliegue debe quedar restringido a `127.0.0.1`/red local.
-- ✅ Hecho: nueva dependencia `require_auth` en `backend/main.py` valida la cabecera `Authorization: Bearer <token>` contra `sessions`; aplicada a `GET/POST /api/board`, `GET /api/ai/validate` y `POST /api/ai/chat` (devuelven 401 sin token válido). El token se propaga desde `useAuth` → `page.tsx` → `KanbanBoard`/`AiChatPanel`, que ya lo incluyen en todas sus llamadas `fetch`. `/api/auth/logout` ahora también invalida el token recibido (cierra el hueco relacionado L3 de la lista de Bajos).
+## Frontend (NextJS/React/TypeScript)
 
-### Medio
+### Fortalezas
 
-> **Estado: corregido.**
+- **Componentes bien desacoplados**: `KanbanBoard`, `KanbanColumn`, `KanbanCard`, `NewCardForm`,
+  `AiChatPanel`, `LoginForm`. Cada uno con responsabilidad unica.
+- **Uso correcto de `@dnd-kit`**: `PointerSensor` con `activationConstraint.distance = 6` previene
+  drags accidentales. `closestCorners` como collision detection.
+- **Esquema de colores via CSS variables** en `globals.css:3-13`, consistente en toda la UI.
+- **Debounce en rename de columna** (`KanbanBoard.tsx:23,114-129`) con `RENAME_SAVE_DEBOUNCE_MS=500`.
+- **Manejo de `loading`/`error`/`empty` states** en `KanbanBoard`, `AiChatPanel`, `LoginForm`.
+- **Test suite completa**: unit tests (vitest) + integration tests + E2E (Playwright).
 
-**M1. El login no usa la tabla `users` de SQLite**
-- `main.py:33` define `VALID_CREDENTIALS = {"usuario": "contraseña"}` hardcodeado y lo usa en `login()` (línea 76). Mientras tanto, `db.py` crea y siembra una tabla `users` completa (`DEFAULT_USER`, línea 64) que **nunca se consulta**. Son dos fuentes de verdad independientes para el mismo usuario; cambiar una no afecta a la otra.
-- Acción: decidir una sola fuente — o el login consulta `users`, o se elimina la tabla/seed hasta que se implemente multiusuario real (el esquema ya está descrito en `docs/db-schema.json` para cuando se implemente).
-- ✅ Hecho: `db.py` añade `find_user(username, path)`; `login()` en `main.py` consulta esa función en lugar del diccionario hardcodeado (que se ha eliminado). Verificado con login correcto e incorrecto vía curl.
+### Problemas
 
-**M2. Guardado del tablero en cada pulsación de tecla, sin debounce**
-- `frontend/src/components/KanbanColumn.tsx:44`: `onChange={(event) => onRename(column.id, event.target.value)}` dispara `updateBoardState` → `setBoard` + `POST /api/board` (fire-and-forget) por cada carácter al renombrar una columna.
-- Combinado con `backend/db.py:81-86` (`get_connection`: abre una conexión SQLite nueva por request, sin WAL ni control de bloqueo), escribir rápido puede generar múltiples requests solapados contra el mismo fichero SQLite, con riesgo de `database is locked` o de que una respuesta más antigua llegue después y sobrescriba un título más reciente con uno desactualizado.
-- Acción: debounce del guardado (p. ej. `onBlur` o un timer de ~500ms) en lugar de un POST por tecla.
-- ✅ Hecho: `KanbanBoard.tsx` actualiza el estado local al instante pero retrasa el `POST /api/board` 500ms tras la última pulsación (con `clearTimeout` en cada cambio y al desmontar). Tests unitarios actualizados para esperar el guardado con `waitFor(..., { timeout: 1000 })`.
+| Severidad | Archivo | Lineas | Problema |
+|-----------|---------|--------|----------|
+| **Alto** | `package.json` | 17-19 | Versiones de `@dnd-kit` inconsistentes: `core@^6.3.1`, `sortable@^10.0.0`, `utilities@^3.2.2`. En el monorepo de dnd-kit, sortable requiere core en la misma version major. Verificar compatibilidad. |
+| **Medio** | `components/KanbanCard.tsx` | - | No hay edicion de tarjetas desde la UI. AGENTS.md dice que las tarjetas "se pueden editar", pero solo IA puede editar via `boardUpdate`. Falta UI para editar title/details. |
+| **Medio** | `lib/kanban.ts` | 164-168 | `createId` usa `Math.random().toString(36).slice(2, 8)`. No criptograficamente seguro (OK para MVP), pero posible colision en creacion rapida. |
+| **Bajo** | `components/KanbanBoard.tsx` | 89 | `void saveBoard(nextBoard)` ignora el promise. El error se captura internamente pero estado UI/servidor puede desincronizarse. |
+| **Bajo** | `components/AiChatPanel.tsx` | 74 | En catch, `setMessages(messages)` usa closure potencialmente stale. Funciona porque `handleSubmit` no se invoca concurrentemente, pero es fragil. |
+| **Bajo** | `components/NewCardForm.tsx` | - | No hay indicador de carga al crear tarjeta. La operacion es sincrona en estado local pero asincrona en save. |
+| **Bajo** | `components/KanbanBoard.tsx` | 28-29 | `error` global para todo el board. Operaciones individuales (add/delete card) no tienen feedback localizado de error. |
 
-**M3. Fallo doble del chat IA requiere reintento manual del usuario**
-- `frontend/src/components/AiChatPanel.tsx:62-68` ya reintenta una vez en cliente si `sendAiChat` falla. Si ambos intentos fallan (observado durante esta sesión: el modelo gratuito `openai/gpt-oss-120b:free` devolvió contenido no-JSON dos veces consecutivas), el usuario ve un error genérico y debe reescribir/reenviar. No hay reintento del lado del servidor en `backend/openrouter.py`.
-- Acción: considerar un reintento adicional en `call_openrouter_messages` o, como mínimo, un botón "Reintentar" que reenvíe el último mensaje sin que el usuario tenga que reescribirlo.
-- ✅ Hecho: el reintento se movió al backend. `request_structured_ai_response` en `ai.py` reintenta hasta 3 veces (constante `MAX_AI_ATTEMPTS`) si la respuesta no es JSON válido o no cumple el esquema, antes de propagar el error. Se eliminó el doble intento duplicado del lado del cliente en `AiChatPanel.tsx` (ya no es necesario y simplifica el componente). Cubierto por dos tests nuevos en `test_main.py` que simulan fallos transitorios sin llamar a la red real.
+---
 
-### Bajo
+## Pruebas
 
-**L1. Imports sin usar (`Any`)**
-- `backend/db.py:6` (`from typing import Any`) y `backend/ai.py:2` (`from typing import Any, Literal, Optional`) — `Any` no se usa en ningún sitio de ambos ficheros.
-- No hay linter de Python configurado en `backend/pyproject.toml` (ni ruff, ni flake8, ni mypy) que detecte esto automáticamente.
-- Acción: eliminar el import; opcionalmente añadir `ruff` como dependencia de desarrollo.
+### Fortalezas
 
-**L2. `datetime.utcnow()` obsoleto**
-- Usado 3 veces en `backend/db.py` (líneas 69, 128, 173); genera `DeprecationWarning` en Python 3.12 (confirmado al ejecutar `pytest`).
-- Acción: sustituir por `datetime.now(datetime.UTC)`.
+- **Backend**: Tests agrupados por dominio (`test_health.py`, `test_auth.py`, `test_board.py`,
+  `test_ai.py`), fixture `_isolated_db` limpia BD entre tests.
+- **Frontend**: `KanbanBoard.test.tsx` mockea `global.fetch` correctamente. Pruebas de integracion
+  en `KanbanBoard.integration.test.tsx` para flujos API -> UI.
+- **E2E**: `ai-chat.spec.ts` prueba el flujo completo de IA con OpenRouter real.
 
-**L3. `/api/auth/logout` es un no-op**
-- `backend/main.py:85-87` no recibe el token ni lo elimina de `sessions`. Sumado a H3, el diccionario `sessions` sólo crece (hasta reiniciar el proceso).
-- Acción: aceptar el token en el body/cabecera y hacer `sessions.pop(token, None)`.
+### Problemas
 
-**L4. `frontend/AGENTS.md` desactualizado**
-- La sección "Estado actual" (líneas 57-62) afirma que no hay backend, ni Docker, ni login, ni persistencia — todo eso ya está implementado según `docs/PLAN.md` (partes 2-10 completas).
-- Riesgo: puede inducir a error a futuras instancias de Claude/colaboradores que lean ese fichero como fuente de verdad.
-- Acción: actualizar o eliminar esa sección; `CLAUDE.md` (raíz) ya refleja el estado real.
+| Severidad | Archivo | Lineas | Problema |
+|-----------|---------|--------|----------|
+| **Medio** | `tests/test_ai.py` | 7-12, 23-37 | Tests que llaman a OpenRouter real son flaky por naturaleza (como reconoce AGENTS.md). Considerar mocking en CI y dejar tests reales como opcionales. |
+| **Medio** | `playwright.config.ts` | 14-18 | `webServer` comando apunta a `npm run dev` en puerto 3000, pero `baseURL` es `http://localhost:8000`. Las E2E tests esperan el backend, no NextJS dev server. Inconsistente. |
+| **Bajo** | `tests/test_ai.py` | 40-76 | Tests de validacion de respuesta usan `try/except/else/raise AssertionError` en vez de `pytest.raises(OpenRouterError)`. |
+| **Bajo** | `kanban.test.ts` | - | Solo prueba `moveCard`. No hay tests para `createId`, ni para `BoardData` validation, ni para column rename logic. |
 
-**L5. Configuración de Playwright inconsistente con los tests**
-- `frontend/playwright.config.ts` arranca un `webServer` con `next dev` en el puerto 3000 y espera a que responda, pero `baseURL` y la navegación explícita en los tests (p. ej. `tests/auth.spec.ts:6`, `page.goto("http://localhost:8000/")`) apuntan al backend FastAPI en el puerto 8000. El `webServer` configurado nunca se usa realmente.
-- Riesgo: confunde a quien lee la config; además `npm run test:e2e` no levanta el backend, así que sin un paso manual previo los tests fallan por conexión rechazada (así ocurrió en esta sesión hasta levantar el backend a mano).
-- Acción: o bien apuntar `webServer.command` al backend real (build frontend + `uvicorn`), o eliminar el bloque `webServer` y documentar el paso manual directamente en `playwright.config.ts` con un comentario.
+---
 
-**L6. Sin soporte de teclado para drag & drop**
-- `KanbanBoard.tsx:25-29` sólo registra `PointerSensor`. `@dnd-kit` soporta `KeyboardSensor` para accesibilidad; sin él, el tablero no es operable sin ratón/táctil.
-- Acción (opcional, mejora de accesibilidad): añadir `KeyboardSensor` con `sortableKeyboardCoordinates`.
+## Docker e Infraestructura
 
-**L7. Datos semilla duplicados entre frontend y backend**
-- `frontend/src/lib/kanban.ts:18-72` (`initialData`) y `backend/db.py:12-62` (`DEFAULT_BOARD`) son el mismo tablero de ejemplo mantenido manualmente en dos lenguajes/ficheros. Hoy están sincronizados, pero es un riesgo de divergencia si se edita uno sin el otro.
-- Acción: bajo impacto ahora; si se reorganiza el modelo de datos, considerar una única fuente (p. ej. generar el seed de frontend a partir del JSON que ya sirve `/api/board`, o documentar explícitamente que deben mantenerse en sync).
+### Problemas
 
-## Pruebas (referencia)
+| Severidad | Archivo | Lineas | Problema |
+|-----------|---------|--------|----------|
+| **Alto** | `.env` | 1 | API key real de OpenRouter en el repositorio. Rotar inmediatamente si es secreto real. |
+| **Medio** | `scripts/start.sh` | 14-16 | Usa `docker run` directo sin `docker-compose`, ignorando el volumen `pm-data` definido en `docker-compose.yml`. Los datos no persisten entre recreaciones. |
+| **Medio** | `scripts/start.sh` | 6-16 | Puerto 8000. `docker-compose.yml` mapea puerto 80:8000. Inconsistencia que confunde. |
+| **Bajo** | `Dockerfile` | - | Sin `HEALTHCHECK`. |
+| **Bajo** | `Dockerfile` | 13-16 | `COPY pyproject.toml` luego `RUN uv pip install` luego `COPY backend`. Capas de Docker optimas. |
 
-Ejecutadas en esta sesión antes de la revisión de código:
-- Backend (`pytest`, 8 tests): 8/8 tras un reintento — un fallo inicial fue causado por el modelo gratuito de OpenRouter devolviendo contenido no-JSON (ver M3), no un bug de código.
-- Frontend unitarias (`vitest`, 10 tests): 10/10.
-- Frontend E2E (`playwright`, 5 tests): 5/5 tras un reintento, misma causa que el fallo de backend.
+---
 
-## Plan de acción priorizado
+## Documentacion
 
-1. ~~Quitar `backend/kanban.db` de git y añadirlo a `.gitignore` (H1).~~ ✅
-2. ~~Arreglar los 2 errores de ESLint para que `npm run lint` pase limpio (H2).~~ ✅
-3. ~~Decidir y documentar el modelo de autorización del backend (H3).~~ ✅ Implementado con `require_auth` + propagación del token.
-4. ~~Unificar el login con la tabla `users` (M1).~~ ✅
-5. ~~Debounce del guardado de título de columna (M2).~~ ✅
-6. ~~Reintento del chat IA ante fallos del modelo (M3).~~ ✅
-7. Resto de hallazgos bajos (L1-L7): limpieza incremental, sin urgencia.
+| Severidad | Archivo | Problema |
+|-----------|---------|----------|
+| **Medio** | `docs/db-schema.json` | Describe estructura document-based (arrays con boards embedidos), pero la implementacion SQLite real usa tabla `boards` con columna `data` JSON. El schema describe el contenido de `data`, no la estructura de la BD. |
+| **Medio** | `docs/db-schema-example.md` | Muestra `cards` como array dentro de `columns`, distinto a la implementacion real (`cards` es dict global por ID). Las tarjetas tienen timestamps que no existen en codigo real. |
+| **Bajo** | `PLAN.md` | Checkboxes mayormente marcados como completados (correcto). QA coverage reporta 10 tests (desactualizado: hay mas de 20 tests entre backend + frontend). |
 
-## Verificación tras la corrección (2026-06-19)
+---
 
-- Backend (`pytest`): 11/11 (se añadieron 3 tests: rechazo sin auth, y dos para el reintento de IA).
-- Frontend unitarias (`vitest`): 10/10.
-- Frontend lint (`eslint`): 0 errores.
-- Frontend E2E (`playwright`): 5/5, primera pasada sin necesitar reintento.
-- Verificación manual vía `curl`: `/api/board` sin token → 401; login con contraseña incorrecta → 401; tras `logout`, el token deja de ser válido → 401.
+## Recomendaciones Prioritarias
+
+1. **Rotar API key** si `sk-or-v1-...` en `.env` es real. Anadir `.env` a `.gitignore` ya esta pero el archivo ya esta commiteado.
+2. **Corregir versiones de `@dnd-kit`** en `package.json` para que `core` y `sortable` coincidan en version major.
+3. **Alinear scripts de inicio**: `start.sh` deberia usar `docker compose up -d` o al menos mismo puerto que `docker-compose.yml`.
+4. **Corregir `password_hash`**: Usar hashing basico (sha256) o renombrar el campo.
+5. **Actualizar docs/ de BD** para reflejar la estructura real (tabla `boards.data` como JSON blob).
+6. **Corregir Playwright config**: `baseURL` debe coincidir con el servidor que `webServer` levanta.
+7. **Agregar edicion de tarjetas en UI** para cumplir con `AGENTS.md` que dice que las tarjetas se pueden editar.
+
+---
+
+## Score General
+
+| Aspecto | Puntuacion (1-10) | Notas |
+|---------|-------------------|-------|
+| Arquitectura | 8/10 | Buena separacion, modular, limpia |
+| Backend | 7/10 | Solido, pass-hashing pendiente |
+| Frontend | 7/10 | Buen dnd-kit, versiones inconsistentes, falta edit |
+| Pruebas | 7/10 | Cobertura amplia, tests flaky, playwright config inconsistente |
+| Docker | 6/10 | Multi-stage bien, scripts desalineados |
+| Documentacion | 5/10 | DB schema desactualizado, PLAN.md no refleja cobertura actual |
+| Seguridad | 5/10 | API key expuesta, pass en texto plano |

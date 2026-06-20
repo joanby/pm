@@ -2,69 +2,50 @@
 
 ## Resumen actual
 
-El frontend está construido con NextJS 16 y React 19. Usa Tailwind CSS 4 y `@dnd-kit` para la interacción de arrastrar y soltar en el tablero Kanban.
+El frontend está construido con NextJS 16 y React 19. Usa Tailwind CSS 4 y `@dnd-kit` para la interacción de arrastrar y soltar en el tablero Kanban. Se exporta como sitio estático (`output: "export"`) y lo sirve el backend FastAPI en `/`.
 
-El proyecto actual renderiza un componente principal `KanbanBoard` desde `src/app/page.tsx`.
+`src/app/page.tsx` muestra `LoginForm` si no hay sesión, o `KanbanBoard` si el usuario ya inició sesión.
 
 ## Arquitectura del frontend
 
-- `src/app/page.tsx`
-  - Exporta la página principal y monta `KanbanBoard`.
+- `src/app/page.tsx` — monta `LoginForm` o `KanbanBoard` según `useAuth()`.
+- `src/app/layout.tsx` — layout global y fuentes de Google.
 
-- `src/app/layout.tsx`
-  - Define el layout global y carga las fuentes de Google.
+- `src/components/LoginForm.tsx` — formulario de usuario/contraseña.
 
 - `src/components/KanbanBoard.tsx`
-  - Componente del tablero principal.
-  - Maneja el estado del tablero (`BoardData`) con columnas, tarjetas y operaciones de arrastre.
-  - Controla la adición, eliminación y renombrado de tarjetas y columnas.
-  - Usa `DndContext` para habilitar drag & drop.
+  - Componente principal autenticado. Recibe `userId`, `token` y `role`.
+  - Carga la lista de tableros del usuario (`listBoards`); si no tiene ninguno, crea uno por defecto.
+  - Carga y guarda el contenido del tablero activo vía `lib/boards.ts`.
+  - Renderiza `BoardSwitcher` para cambiar/crear/renombrar/eliminar tableros.
+  - Muestra el botón "Gestionar usuarios" (abre `UserManagementPanel`) solo si `role === "admin"`.
+  - Usa `DndContext` para drag & drop de tarjetas entre columnas.
 
-- `src/components/KanbanColumn.tsx`
-  - Representa una columna del tablero.
-  - Tiene un campo de título editable, una lista de tarjetas y un formulario para crear nuevas tarjetas.
-  - Usa `useDroppable` y `SortableContext`.
+- `src/components/BoardSwitcher.tsx`
+  - Pestañas con los tableros del usuario; doble click para renombrar, botón "✕" para eliminar (oculto si solo queda un tablero), botón "+" para crear uno nuevo.
 
-- `src/components/KanbanCard.tsx`
-  - Representa una tarjeta individual.
-  - Usa `useSortable` para drag & drop y permite eliminar la tarjeta.
+- `src/components/UserManagementPanel.tsx`
+  - Modal solo accesible para administradores: lista usuarios, crea usuarios (`member` por defecto), alterna rol admin/member, elimina usuarios. Usa `lib/users.ts`.
 
-- `src/components/NewCardForm.tsx`
-  - Formulario de creación de tarjeta que puede abrirse y cerrarse.
-  - Valida título obligatorio.
+- `src/components/KanbanColumn.tsx` / `KanbanCard.tsx` / `KanbanCardPreview.tsx` / `NewCardForm.tsx`
+  - Igual que antes: columna con título editable y formulario de tarjeta, tarjeta arrastrable, vista previa de arrastre.
 
-- `src/components/KanbanCardPreview.tsx`
-  - Vista previa de la tarjeta mientras se arrastra.
+- `src/components/AiChatPanel.tsx`
+  - Chat lateral. Envía `message`, `board_id` (del tablero activo) y `board` a `/api/ai/chat`; aplica `boardUpdate` si la IA lo devuelve.
 
-- `src/lib/kanban.ts`
-  - Modelo de datos `BoardData`, `Column`, `Card`.
-  - Datos iniciales del tablero.
-  - Lógica de ordenación y movimiento de tarjetas (`moveCard`).
-  - Generador de IDs (`createId`).
+- `src/lib/kanban.ts` — modelo `BoardData`/`Column`/`Card`, `moveCard`, `createId`.
+- `src/lib/auth.ts` — hook `useAuth` (login/logout, sesión en `localStorage` con `id`, `username`, `displayName`, `role`, `token`).
+- `src/lib/boards.ts` — cliente API de tableros (`listBoards`, `createBoard`, `getBoard`, `updateBoard`, `renameBoard`, `deleteBoard`).
+- `src/lib/users.ts` — cliente API de usuarios (`listUsers`, `createUser`, `updateUserRole`, `deleteUser`); solo lo usa `UserManagementPanel`.
 
 ## Pruebas actuales
 
-- `src/components/KanbanBoard.test.tsx`
-  - Verifica renderizado de columnas.
-  - Comprueba renombrado de columna.
-  - Comprueba creación y eliminación de tarjetas.
-
-- `src/lib/kanban.test.ts`
-  - Verifica la lógica `moveCard` para reordenar dentro de la misma columna.
-  - Verifica mover tarjetas a otra columna.
-  - Verifica soltar una tarjeta al final de otra columna.
-
-## Estado actual
-
-- El frontend funciona como demo estática del tablero Kanban.
-- No hay backend implementado en `backend/` más allá de un placeholder.
-- No existe aún integración con Docker ni con OpenRouter.
-- No hay experiencia de login ni persistencia del tablero vía backend.
-
-## Próximos pasos recomendados
-
-1. Agregar backend FastAPI para servir la página y API.
-2. Añadir login simulado y persistencia de tablero.
-3. Conectar la UI con el backend y mover el estado del tablero al servidor.
-4. Implementar llamadas de IA estructuradas a OpenRouter.
-5. Añadir chat lateral y aplicar actualizaciones del tablero desde la IA.
+- `src/test/mockBoardApi.ts` — helper compartido que mockea `fetch` para `/api/boards*` y `/api/ai/chat` en los tests de Vitest.
+- `src/components/KanbanBoard.test.tsx` y `KanbanBoard.integration.test.tsx` — renderizado de columnas, renombrado, alta/baja de tarjetas, respuestas del chat IA, visibilidad condicional de "Gestionar usuarios" según rol.
+- `src/lib/kanban.test.ts` — lógica `moveCard`.
+- `frontend/tests/*.spec.ts` (Playwright, contra el backend real en Docker en `localhost:8000`):
+  - `auth.spec.ts` — login/logout.
+  - `kanban.spec.ts` — carga de tablero, alta de tarjeta, mover tarjeta entre columnas.
+  - `boards.spec.ts` — crear, cambiar y eliminar tableros.
+  - `users.spec.ts` — un admin crea y elimina un usuario desde el panel de gestión.
+  - `ai-chat.spec.ts` — el chat aplica una actualización real de OpenRouter (puede fallar de forma intermitente por el modelo gratuito).

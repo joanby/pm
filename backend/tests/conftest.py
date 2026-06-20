@@ -37,8 +37,34 @@ def client():
 
 @pytest.fixture
 def auth_headers(client) -> dict:
+    """Auth headers for the seeded default user, who holds the admin role."""
     response = client.post(
         "/api/auth/login", json={"username": "usuario", "password": "contraseña"}
     )
     token = response.json()["token"]
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def member_headers(client, auth_headers) -> dict:
+    client.post(
+        "/api/users",
+        json={
+            "username": "miembro",
+            "password": "clave-segura",
+            "display_name": "Usuario Miembro",
+            "role": "member",
+        },
+        headers=auth_headers,
+    )
+    response = client.post(
+        "/api/auth/login", json={"username": "miembro", "password": "clave-segura"}
+    )
+    token = response.json()["token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def default_board_id(client, auth_headers) -> str:
+    boards = client.get("/api/boards", headers=auth_headers).json()
+    return boards[0]["id"]

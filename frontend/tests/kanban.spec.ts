@@ -6,7 +6,11 @@ test.beforeEach(async ({ page }) => {
     data: { username: "usuario", password: "contraseña" },
   });
   const { token } = await loginResponse.json();
-  await page.request.post("/api/board", {
+  const boardsResponse = await page.request.get("/api/boards", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const [{ id: boardId }] = await boardsResponse.json();
+  await page.request.put(`/api/boards/${boardId}`, {
     data: initialData,
     headers: { Authorization: `Bearer ${token}` },
   });

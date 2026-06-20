@@ -14,6 +14,7 @@ class ChatMessage(BaseModel):
 
 class AiChatRequest(BaseModel):
     message: str
+    board_id: str
     board: BoardData
     history: list[ChatMessage] = Field(default_factory=list)
 

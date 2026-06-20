@@ -1,9 +1,10 @@
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 
 from backend.db.connection import get_connection
+from backend.db.users import hash_password
 
-DEFAULT_BOARD = {
+DEFAULT_BOARD_DATA = {
     "columns": [
         {"id": "col-backlog", "title": "Pendientes", "cardIds": ["card-1", "card-2"]},
         {"id": "col-discovery", "title": "Descubrimiento", "cardIds": ["card-3"]},
@@ -58,12 +59,41 @@ DEFAULT_BOARD = {
 DEFAULT_USER = {
     "id": "user-1",
     "username": "usuario",
-    "password_hash": "contraseña",
+    "password": "contraseña",
     "display_name": "Usuario MVP",
-    "created_at": datetime.utcnow().isoformat() + "Z",
+    "role": "admin",
+    "created_at": datetime.now(UTC).isoformat(),
 }
 
-DEFAULT_CONVERSATIONS = []  # type: list[dict]
+DEFAULT_BOARD_ID = "board-1"
+DEFAULT_BOARD_NAME = "Tablero principal"
+
+
+def _column_names(cursor, table: str) -> set[str]:
+    return {row[1] for row in cursor.execute(f"PRAGMA table_info({table})").fetchall()}
+
+
+def _migrate_schema(cursor) -> None:
+    user_columns = _column_names(cursor, "users")
+    if "role" not in user_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'member'")
+
+    board_columns = _column_names(cursor, "boards")
+    if "name" not in board_columns:
+        cursor.execute("ALTER TABLE boards ADD COLUMN name TEXT NOT NULL DEFAULT 'Tablero'")
+    if "created_at" not in board_columns:
+        cursor.execute("ALTER TABLE boards ADD COLUMN created_at TEXT NOT NULL DEFAULT ''")
+        cursor.execute("UPDATE boards SET created_at = updated_at WHERE created_at = ''")
+
+    # One-time migration: legacy MVP stored the password in plain text.
+    legacy_user = cursor.execute(
+        "SELECT id, password_hash FROM users WHERE id = ?", (DEFAULT_USER["id"],)
+    ).fetchone()
+    if legacy_user and legacy_user["password_hash"] == DEFAULT_USER["password"]:
+        cursor.execute(
+            "UPDATE users SET password_hash = ?, role = 'admin' WHERE id = ?",
+            (hash_password(DEFAULT_USER["password"]), DEFAULT_USER["id"]),
+        )
 
 
 def init_db(path=None):
@@ -74,7 +104,9 @@ def init_db(path=None):
         CREATE TABLE IF NOT EXISTS boards (
             id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
+            name TEXT NOT NULL DEFAULT 'Tablero',
             data TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT '',
             updated_at TEXT NOT NULL
         )
         """
@@ -86,6 +118,7 @@ def init_db(path=None):
             username TEXT NOT NULL UNIQUE,
             password_hash TEXT NOT NULL,
             display_name TEXT,
+            role TEXT NOT NULL DEFAULT 'member',
             created_at TEXT NOT NULL
         )
         """
@@ -102,36 +135,36 @@ def init_db(path=None):
         """
     )
 
-    if cursor.execute("SELECT 1 FROM boards WHERE id = ?", ("board-1",)).fetchone() is None:
-        cursor.execute(
-            "INSERT INTO boards (id, user_id, data, updated_at) VALUES (?, ?, ?, ?)",
-            ("board-1", DEFAULT_USER["id"], json.dumps(DEFAULT_BOARD), datetime.utcnow().isoformat() + "Z"),
-        )
+    _migrate_schema(cursor)
 
     if cursor.execute("SELECT 1 FROM users WHERE id = ?", (DEFAULT_USER["id"],)).fetchone() is None:
         cursor.execute(
-            "INSERT INTO users (id, username, password_hash, display_name, created_at) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO users (id, username, password_hash, display_name, role, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
             (
                 DEFAULT_USER["id"],
                 DEFAULT_USER["username"],
-                DEFAULT_USER["password_hash"],
+                hash_password(DEFAULT_USER["password"]),
                 DEFAULT_USER["display_name"],
+                DEFAULT_USER["role"],
                 DEFAULT_USER["created_at"],
             ),
         )
 
-    if cursor.execute("SELECT 1 FROM conversations LIMIT 1").fetchone() is None:
-        for conversation in DEFAULT_CONVERSATIONS:
-            cursor.execute(
-                "INSERT INTO conversations (id, user_id, board_id, messages, last_updated_at) VALUES (?, ?, ?, ?, ?)",
-                (
-                    conversation["id"],
-                    conversation["user_id"],
-                    conversation["board_id"],
-                    json.dumps(conversation["messages"]),
-                    conversation["last_updated_at"],
-                ),
-            )
+    if cursor.execute("SELECT 1 FROM boards WHERE id = ?", (DEFAULT_BOARD_ID,)).fetchone() is None:
+        now = datetime.now(UTC).isoformat()
+        cursor.execute(
+            "INSERT INTO boards (id, user_id, name, data, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                DEFAULT_BOARD_ID,
+                DEFAULT_USER["id"],
+                DEFAULT_BOARD_NAME,
+                json.dumps(DEFAULT_BOARD_DATA),
+                now,
+                now,
+            ),
+        )
 
     conn.commit()
     conn.close()

@@ -15,12 +15,14 @@ type AiChatResponse = {
 
 type AiChatPanelProps = {
   board: BoardData;
+  boardId: string;
   onBoardUpdate: (board: BoardData) => void;
   token: string;
 };
 
 const sendAiChat = async (
   message: string,
+  boardId: string,
   board: BoardData,
   history: ChatMessage[],
   token: string
@@ -33,6 +35,7 @@ const sendAiChat = async (
     },
     body: JSON.stringify({
       message,
+      board_id: boardId,
       board,
       history,
     }),
@@ -45,7 +48,7 @@ const sendAiChat = async (
   return (await response.json()) as AiChatResponse;
 };
 
-export const AiChatPanel = ({ board, onBoardUpdate, token }: AiChatPanelProps) => {
+export const AiChatPanel = ({ board, boardId, onBoardUpdate, token }: AiChatPanelProps) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -65,7 +68,7 @@ export const AiChatPanel = ({ board, onBoardUpdate, token }: AiChatPanelProps) =
     setIsSending(true);
 
     try {
-      const data = await sendAiChat(message, board, messages, token);
+      const data = await sendAiChat(message, boardId, board, messages, token);
       setMessages([...nextMessages, { role: "assistant", content: data.message }]);
       if (data.boardUpdate) {
         onBoardUpdate(data.boardUpdate);

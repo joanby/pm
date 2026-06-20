@@ -12,21 +12,37 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { AiChatPanel } from "@/components/AiChatPanel";
+import { BoardSwitcher } from "@/components/BoardSwitcher";
+import { UserManagementPanel } from "@/components/UserManagementPanel";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
 import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
+import {
+  createBoard,
+  deleteBoard,
+  getBoard,
+  listBoards,
+  renameBoard,
+  updateBoard,
+  type BoardSummary,
+} from "@/lib/boards";
 
 type KanbanBoardProps = {
+  userId: string;
   token: string;
+  role: "admin" | "member";
 };
 
 const RENAME_SAVE_DEBOUNCE_MS = 500;
 
-export const KanbanBoard = ({ token }: KanbanBoardProps) => {
+export const KanbanBoard = ({ userId, token, role }: KanbanBoardProps) => {
+  const [boards, setBoards] = useState<BoardSummary[]>([]);
+  const [activeBoardId, setActiveBoardId] = useState<string | null>(null);
   const [board, setBoard] = useState<BoardData>(() => initialData);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isManagingUsers, setIsManagingUsers] = useState(false);
   const renameSaveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const sensors = useSensors(
@@ -38,17 +54,32 @@ export const KanbanBoard = ({ token }: KanbanBoardProps) => {
   const cardsById = useMemo(() => board.cards, [board.cards]);
 
   useEffect(() => {
-    const loadBoard = async () => {
+    const loadBoards = async () => {
       try {
-        const response = await fetch("/api/board", {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!response.ok) {
-          throw new Error("No se pudo cargar el tablero");
+        let summaries = await listBoards(token);
+        if (summaries.length === 0) {
+          const created = await createBoard(token, "Mi tablero");
+          summaries = [{ id: created.id, name: created.name, updated_at: created.updated_at }];
         }
-        const data = await response.json();
-        setBoard(data);
+        setBoards(summaries);
+        setActiveBoardId(summaries[0].id);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error al cargar los tableros");
+        setIsLoading(false);
+      }
+    };
+    loadBoards();
+  }, [token]);
+
+  useEffect(() => {
+    if (!activeBoardId) {
+      return;
+    }
+    const loadBoard = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getBoard(token, activeBoardId);
+        setBoard({ columns: data.columns, cards: data.cards });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error al cargar el tablero");
       } finally {
@@ -56,7 +87,7 @@ export const KanbanBoard = ({ token }: KanbanBoardProps) => {
       }
     };
     loadBoard();
-  }, [token]);
+  }, [token, activeBoardId]);
 
   useEffect(() => {
     return () => {
@@ -67,20 +98,51 @@ export const KanbanBoard = ({ token }: KanbanBoardProps) => {
   }, []);
 
   const saveBoard = async (nextBoard: BoardData) => {
+    if (!activeBoardId) {
+      return;
+    }
     try {
-      const response = await fetch("/api/board", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(nextBoard),
-      });
-      if (!response.ok) {
-        throw new Error("No se pudo guardar el tablero");
-      }
+      await updateBoard(token, activeBoardId, nextBoard);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al guardar el tablero");
+    }
+  };
+
+  const handleSelectBoard = (boardId: string) => {
+    setActiveBoardId(boardId);
+  };
+
+  const handleCreateBoard = async (name: string) => {
+    try {
+      const created = await createBoard(token, name);
+      setBoards((current) => [...current, { id: created.id, name: created.name, updated_at: created.updated_at }]);
+      setActiveBoardId(created.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al crear el tablero");
+    }
+  };
+
+  const handleRenameBoard = async (boardId: string, name: string) => {
+    try {
+      await renameBoard(token, boardId, name);
+      setBoards((current) => current.map((b) => (b.id === boardId ? { ...b, name } : b)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al renombrar el tablero");
+    }
+  };
+
+  const handleDeleteBoard = async (boardId: string) => {
+    try {
+      await deleteBoard(token, boardId);
+      setBoards((current) => {
+        const next = current.filter((b) => b.id !== boardId);
+        if (boardId === activeBoardId) {
+          setActiveBoardId(next[0]?.id ?? null);
+        }
+        return next;
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al eliminar el tablero");
     }
   };
 
@@ -193,15 +255,36 @@ export const KanbanBoard = ({ token }: KanbanBoardProps) => {
                 entre fases y anota ideas rápidas sin perderte en configuraciones.
               </p>
             </div>
-            <div className="rounded-2xl border border-[var(--stroke)] bg-[var(--surface)] px-5 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--gray-text)]">
-                Enfoque
-              </p>
-              <p className="mt-2 text-lg font-semibold text-[var(--primary-blue)]">
-                Un tablero. Cinco columnas. Cero desorden.
-              </p>
+            <div className="flex items-start gap-3">
+              <div className="rounded-2xl border border-[var(--stroke)] bg-[var(--surface)] px-5 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--gray-text)]">
+                  Enfoque
+                </p>
+                <p className="mt-2 text-lg font-semibold text-[var(--primary-blue)]">
+                  Tus tableros. Tus reglas.
+                </p>
+              </div>
+              {role === "admin" ? (
+                <button
+                  type="button"
+                  onClick={() => setIsManagingUsers(true)}
+                  className="rounded-full border border-[var(--stroke)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--navy-dark)] transition hover:border-[var(--primary-blue)]"
+                >
+                  Gestionar usuarios
+                </button>
+              ) : null}
             </div>
           </div>
+
+          <BoardSwitcher
+            boards={boards}
+            activeBoardId={activeBoardId}
+            onSelect={handleSelectBoard}
+            onCreate={handleCreateBoard}
+            onRename={handleRenameBoard}
+            onDelete={handleDeleteBoard}
+          />
+
           <div className="flex flex-wrap items-center gap-4">
             {board.columns.map((column) => (
               <div
@@ -249,9 +332,24 @@ export const KanbanBoard = ({ token }: KanbanBoardProps) => {
             </DragOverlay>
           </DndContext>
 
-          <AiChatPanel board={board} onBoardUpdate={handleAiBoardUpdate} token={token} />
+          {activeBoardId ? (
+            <AiChatPanel
+              board={board}
+              boardId={activeBoardId}
+              onBoardUpdate={handleAiBoardUpdate}
+              token={token}
+            />
+          ) : null}
         </div>
       </main>
+
+      {isManagingUsers ? (
+        <UserManagementPanel
+          token={token}
+          currentUserId={userId}
+          onClose={() => setIsManagingUsers(false)}
+        />
+      ) : null}
     </div>
   );
 };

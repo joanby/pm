@@ -12,3 +12,5 @@ docs
 test-results
 **/__pycache__
 **/*.py[cod]
+backend/kanban.db
+backend/test-kanban.db

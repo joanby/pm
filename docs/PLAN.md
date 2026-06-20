@@ -114,12 +114,25 @@ Crear un MVP funcional de gestión de proyectos con:
 - [x] Aplicar automáticamente `boardUpdate` si la IA propone cambios
 - [x] Escribir pruebas E2E para el flujo de chat y actualización del tablero
 
+## Parte 11: Multi-usuario y multi-tablero
+
+- [x] Hashear contraseñas con bcrypt (antes se guardaban y comparaban en texto plano); migración automática de usuarios antiguos en `init_db`
+- [x] Añadir rol (`admin`/`member`) a los usuarios
+- [x] Gestión de usuarios: `/api/users` (crear/listar, solo admin), `/api/users/me` (perfil propio), `/api/users/{id}` (editar/eliminar, solo admin)
+  - Un admin no puede eliminarse a sí mismo ni degradar al último admin a `member`
+- [x] Sustituir el tablero único (`/api/board`) por tableros múltiples por usuario (`/api/boards`, `/api/boards/{id}`: crear, leer, actualizar, renombrar, eliminar)
+  - Cada consulta filtra por `user_id`, así que un usuario no puede ver ni modificar tableros de otro
+- [x] El chat IA (`/api/ai/chat`) ahora recibe `board_id` y verifica la propiedad del tablero antes de guardar
+- [x] Frontend: `BoardSwitcher` para crear/cambiar/renombrar/eliminar tableros; panel `UserManagementPanel` (solo visible para admins) para gestionar usuarios
+- [x] Backend: 41 tests, 97% de cobertura (`uv run pytest tests --cov=backend`)
+- [x] Frontend: 12 tests unitarios/integración (Vitest) + 7 tests E2E (Playwright, contra el contenedor Docker real): login/logout, interacción de tablero, multi-tablero, gestión de usuarios, chat IA con OpenRouter real
+- [x] Corregido `.dockerignore`: no excluía `backend/kanban.db`/`backend/test-kanban.db`, por lo que la base de datos de desarrollo local se horneaba dentro de la imagen Docker en vez de crearse limpia en cada arranque
+
 ## Aseguramiento de calidad
 
-- ✅ Cobertura de pruebas: 10 tests (6 unitarios + 4 E2E)
-  - Unit tests: kanban.test.ts (3), KanbanBoard.test.tsx (3)
-  - E2E tests: auth.spec.ts (1 - login/logout), kanban.spec.ts (3 - board interaction)
-  - Enfoque: Pruebas valiosas que validan flujos críticos, sin relleno innecesario
-- Pruebas de integración para los flujos críticos: login, tablero, API, IA
+- Backend: 41 tests con pytest, 97% de cobertura de líneas
+- Frontend: 12 tests con Vitest (unitarios + integración) y 7 tests E2E con Playwright contra el backend real en Docker
+  - `ai-chat.spec.ts` puede fallar de forma intermitente por la latencia del modelo gratuito de OpenRouter; no indica una regresión
+- Pruebas de integración para los flujos críticos: login, multi-tablero, gestión de usuarios, IA
 - Mantenimiento de la regla de no emojis en documentación y código
 - Mantener el desarrollo simple y directo, evitando sobreingeniería

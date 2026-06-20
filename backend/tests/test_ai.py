@@ -15,18 +15,26 @@ def test_ai_validation_reaches_openrouter(client, auth_headers) -> None:
 def test_ai_chat_requires_auth(client) -> None:
     response = client.post(
         "/api/ai/chat",
-        json={"message": "hi", "board": {"columns": [], "cards": {}}, "history": []},
+        json={
+            "message": "hi",
+            "board_id": "board-1",
+            "board": {"columns": [], "cards": {}},
+            "history": [],
+        },
     )
     assert response.status_code == 401
 
 
-def test_ai_chat_returns_structured_response_from_openrouter(client, auth_headers) -> None:
-    board = client.get("/api/board", headers=auth_headers).json()
+def test_ai_chat_returns_structured_response_from_openrouter(
+    client, auth_headers, default_board_id
+) -> None:
+    board = client.get(f"/api/boards/{default_board_id}", headers=auth_headers).json()
     response = client.post(
         "/api/ai/chat",
         json={
             "message": "Reply with message exactly 'ok'. Do not change the board.",
-            "board": board,
+            "board_id": default_board_id,
+            "board": {"columns": board["columns"], "cards": board["cards"]},
             "history": [],
         },
         headers=auth_headers,
@@ -35,6 +43,20 @@ def test_ai_chat_returns_structured_response_from_openrouter(client, auth_header
     body = response.json()
     assert body["message"].lower() == "ok"
     assert body["boardUpdate"] is None
+
+
+def test_ai_chat_rejects_unknown_board(client, auth_headers) -> None:
+    response = client.post(
+        "/api/ai/chat",
+        json={
+            "message": "hi",
+            "board_id": "does-not-exist",
+            "board": {"columns": [], "cards": {}},
+            "history": [],
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 404
 
 
 def test_parse_ai_response_rejects_invalid_json() -> None:
@@ -87,7 +109,9 @@ def test_request_structured_ai_response_retries_until_valid_json(monkeypatch) ->
 
     monkeypatch.setattr(ai_module, "call_openrouter_messages", fake_call)
 
-    request = AiChatRequest(message="hi", board=BoardData(columns=[], cards={}), history=[])
+    request = AiChatRequest(
+        message="hi", board_id="board-1", board=BoardData(columns=[], cards={}), history=[]
+    )
     response = ai_module.request_structured_ai_response(request)
 
     assert response.message == "ok"
@@ -97,7 +121,9 @@ def test_request_structured_ai_response_retries_until_valid_json(monkeypatch) ->
 def test_request_structured_ai_response_raises_after_max_attempts(monkeypatch) -> None:
     monkeypatch.setattr(ai_module, "call_openrouter_messages", lambda messages, schema: "not json")
 
-    request = AiChatRequest(message="hi", board=BoardData(columns=[], cards={}), history=[])
+    request = AiChatRequest(
+        message="hi", board_id="board-1", board=BoardData(columns=[], cards={}), history=[]
+    )
 
     try:
         ai_module.request_structured_ai_response(request)

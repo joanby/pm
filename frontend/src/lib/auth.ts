@@ -2,8 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-type AuthSession = {
+export type AuthSession = {
+  id: string;
   username: string;
+  displayName: string | null;
+  role: "admin" | "member";
   token: string;
 };
 
@@ -42,7 +45,10 @@ export const useAuth = () => {
 
         const data = await response.json();
         const authSession: AuthSession = {
+          id: data.id,
           username: data.username,
+          displayName: data.display_name,
+          role: data.role,
           token: data.token,
         };
         setSession(authSession);

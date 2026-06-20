@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, model_validator
 
 
@@ -28,3 +30,44 @@ class BoardData(BaseModel):
                     raise ValueError(f"Card {card_id} is listed more than once")
                 seen_card_ids.add(card_id)
         return self
+
+
+class BoardSummary(BaseModel):
+    id: str
+    name: str
+    updated_at: str
+
+
+class BoardDetail(BoardData):
+    id: str
+    name: str
+    updated_at: str
+
+
+class BoardCreateRequest(BaseModel):
+    name: str
+
+
+class BoardRenameRequest(BaseModel):
+    name: str
+
+
+class UserPublic(BaseModel):
+    id: str
+    username: str
+    display_name: str | None
+    role: str
+    created_at: str
+
+
+class UserCreateRequest(BaseModel):
+    username: str
+    password: str
+    display_name: str
+    role: Literal["admin", "member"] = "member"
+
+
+class UserUpdateRequest(BaseModel):
+    display_name: str | None = None
+    password: str | None = None
+    role: Literal["admin", "member"] | None = None

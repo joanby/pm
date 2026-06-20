@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.db import get_db_path, init_db
-from backend.routers import ai, auth, board, health
+from backend.routers import ai, auth, boards, health, users
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 FRONTEND_DIR = STATIC_DIR / "frontend"
@@ -22,8 +22,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Project Management MVP Backend", lifespan=lifespan)
 
 app.include_router(health.router)
-app.include_router(board.router)
+app.include_router(boards.router)
 app.include_router(auth.router)
+app.include_router(users.router)
 app.include_router(ai.router)
 
 # Mount Next.js static files if they exist

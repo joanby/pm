@@ -30,8 +30,8 @@ export const KanbanCard = ({ card, onDelete }: KanbanCardProps) => {
       {...listeners}
       data-testid={`card-${card.id}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
           <h4 className="font-display text-base font-semibold text-[var(--navy-dark)]">
             {card.title}
           </h4>
@@ -42,10 +42,27 @@ export const KanbanCard = ({ card, onDelete }: KanbanCardProps) => {
         <button
           type="button"
           onClick={() => onDelete(card.id)}
-          className="rounded-full border border-transparent px-2 py-1 text-xs font-semibold text-[var(--gray-text)] transition hover:border-[var(--stroke)] hover:text-[var(--navy-dark)]"
-          aria-label={`Delete ${card.title}`}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-transparent text-[var(--gray-text)] transition hover:border-[var(--stroke)] hover:bg-red-50 hover:text-red-600"
+          aria-label={`Eliminar ${card.title}`}
+          title="Eliminar tarjeta"
         >
-          Remove
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.75}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-4 w-4"
+            aria-hidden="true"
+          >
+            <path d="M3 6h18" />
+            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+            <path d="M10 11v6" />
+            <path d="M14 11v6" />
+          </svg>
         </button>
       </div>
     </article>

@@ -134,7 +134,7 @@ export const KanbanBoard = ({ token }: KanbanBoardProps) => {
       ...board,
       cards: {
         ...board.cards,
-        [id]: { id, title, details: details || "No details yet." },
+        [id]: { id, title, details: details || "Sin detalles todavía." },
       },
       columns: board.columns.map((column) =>
         column.id === columnId
@@ -183,22 +183,22 @@ export const KanbanBoard = ({ token }: KanbanBoardProps) => {
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[var(--gray-text)]">
-                Single Board Kanban
+                Tablero Kanban Individual
               </p>
               <h1 className="mt-3 font-display text-4xl font-semibold text-[var(--navy-dark)]">
                 Kanban Studio
               </h1>
               <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--gray-text)]">
-                Keep momentum visible. Rename columns, drag cards between stages,
-                and capture quick notes without getting buried in settings.
+                Mantén el impulso a la vista. Renombra columnas, arrastra tarjetas
+                entre fases y anota ideas rápidas sin perderte en configuraciones.
               </p>
             </div>
             <div className="rounded-2xl border border-[var(--stroke)] bg-[var(--surface)] px-5 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--gray-text)]">
-                Focus
+                Enfoque
               </p>
               <p className="mt-2 text-lg font-semibold text-[var(--primary-blue)]">
-                One board. Five columns. Zero clutter.
+                Un tablero. Cinco columnas. Cero desorden.
               </p>
             </div>
           </div>
@@ -221,14 +221,14 @@ export const KanbanBoard = ({ token }: KanbanBoardProps) => {
           </p>
         ) : null}
 
-        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCorners}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
-            <section className="grid gap-6 lg:grid-cols-5">
+            <section className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
               {board.columns.map((column) => (
                 <KanbanColumn
                   key={column.id}

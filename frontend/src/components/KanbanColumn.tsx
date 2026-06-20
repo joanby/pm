@@ -31,21 +31,19 @@ export const KanbanColumn = ({
       )}
       data-testid={`column-${column.id}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="w-full">
-          <div className="flex items-center gap-3">
-            <div className="h-2 w-10 rounded-full bg-[var(--accent-yellow)]" />
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--gray-text)]">
-              {cards.length} cards
-            </span>
-          </div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="h-2 w-6 shrink-0 rounded-full bg-[var(--accent-yellow)]" />
           <input
             value={column.title}
             onChange={(event) => onRename(column.id, event.target.value)}
-            className="mt-3 w-full bg-transparent font-display text-lg font-semibold text-[var(--navy-dark)] outline-none"
-            aria-label="Column title"
+            className="w-full min-w-0 bg-transparent font-display text-lg font-semibold text-[var(--navy-dark)] outline-none"
+            aria-label="Título de la columna"
           />
         </div>
+        <span className="shrink-0 rounded-full bg-[var(--surface)] px-2.5 py-1 text-xs font-semibold text-[var(--gray-text)]">
+          {cards.length}
+        </span>
       </div>
       <div className="mt-4 flex flex-1 flex-col gap-3">
         <SortableContext items={column.cardIds} strategy={verticalListSortingStrategy}>
@@ -59,7 +57,7 @@ export const KanbanColumn = ({
         </SortableContext>
         {cards.length === 0 && (
           <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-[var(--stroke)] px-3 py-6 text-center text-xs font-semibold uppercase tracking-[0.2em] text-[var(--gray-text)]">
-            Drop a card here
+            Suelta una tarjeta aquí
           </div>
         )}
       </div>

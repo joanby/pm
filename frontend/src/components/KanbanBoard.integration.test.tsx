@@ -56,7 +56,7 @@ describe("KanbanBoard API integration", () => {
   it("saves changes after renaming a column", async () => {
     render(<KanbanBoard token="test-token" />);
     await waitFor(() => expect(screen.getByText("Kanban Studio")).toBeInTheDocument());
-    const input = screen.getByLabelText("Column title");
+    const input = screen.getByLabelText("Título de la columna");
     await userEvent.clear(input);
     await userEvent.type(input, "Updated backlog");
     expect((input as HTMLInputElement).value).toBe("Updated backlog");

@@ -22,7 +22,7 @@ export const LoginForm = ({ onLogin, isLoading = false, error }: LoginFormProps)
       <div className="w-full max-w-md rounded-[32px] border border-[var(--stroke)] bg-white/95 p-8 shadow-[var(--shadow)] backdrop-blur">
         <div className="mb-8 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[var(--gray-text)]">
-            Project Management
+            Gestión de Proyectos
           </p>
           <h1 className="mt-3 font-display text-3xl font-semibold text-[var(--navy-dark)]">
             Kanban Studio

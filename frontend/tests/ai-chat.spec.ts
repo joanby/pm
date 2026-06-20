@@ -26,7 +26,7 @@ test("ai chat applies a board update", async ({ page }) => {
     .fill(`Rename the first column to ${columnName}. Return a complete boardUpdate.`);
   await page.getByRole("button", { name: "Enviar" }).click();
 
-  await expect(page.locator(`input[aria-label="Column title"][value="${columnName}"]`)).toBeVisible({
+  await expect(page.locator(`input[aria-label="Título de la columna"][value="${columnName}"]`)).toBeVisible({
     timeout: 90_000,
   });
   await expect(page.getByTestId("ai-chat-messages")).toContainText(/renamed|actualizado|updated/i);

@@ -29,7 +29,7 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
             onChange={(event) =>
               setFormState((prev) => ({ ...prev, title: event.target.value }))
             }
-            placeholder="Card title"
+            placeholder="Título de la tarjeta"
             className="w-full rounded-xl border border-[var(--stroke)] bg-white px-3 py-2 text-sm font-medium text-[var(--navy-dark)] outline-none transition focus:border-[var(--primary-blue)]"
             required
           />
@@ -38,7 +38,7 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
             onChange={(event) =>
               setFormState((prev) => ({ ...prev, details: event.target.value }))
             }
-            placeholder="Details"
+            placeholder="Detalles"
             rows={3}
             className="w-full resize-none rounded-xl border border-[var(--stroke)] bg-white px-3 py-2 text-sm text-[var(--gray-text)] outline-none transition focus:border-[var(--primary-blue)]"
           />
@@ -47,7 +47,7 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
               type="submit"
               className="rounded-full bg-[var(--secondary-purple)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:brightness-110"
             >
-              Add card
+              Añadir tarjeta
             </button>
             <button
               type="button"
@@ -57,7 +57,7 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
               }}
               className="rounded-full border border-[var(--stroke)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-text)] transition hover:text-[var(--navy-dark)]"
             >
-              Cancel
+              Cancelar
             </button>
           </div>
         </form>
@@ -65,9 +65,23 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="w-full rounded-full border border-dashed border-[var(--stroke)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--primary-blue)] transition hover:border-[var(--primary-blue)]"
+          className="flex w-full items-center justify-center gap-2 rounded-full border border-dashed border-[var(--stroke)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--primary-blue)] transition hover:border-[var(--primary-blue)]"
         >
-          Add a card
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-3.5 w-3.5"
+            aria-hidden="true"
+          >
+            <path d="M12 5v14" />
+            <path d="M5 12h14" />
+          </svg>
+          Nueva tarjeta
         </button>
       )}
     </div>

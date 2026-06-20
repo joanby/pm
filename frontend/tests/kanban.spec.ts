@@ -32,10 +32,10 @@ test("loads the kanban board", async ({ page }) => {
 
 test("adds a card to a column", async ({ page }) => {
   const firstColumn = page.locator('[data-testid^="column-"]').first();
-  await firstColumn.getByRole("button", { name: /add a card/i }).click();
-  await firstColumn.getByPlaceholder("Card title").fill("Playwright card");
-  await firstColumn.getByPlaceholder("Details").fill("Added via e2e.");
-  await firstColumn.getByRole("button", { name: /add card/i }).click();
+  await firstColumn.getByRole("button", { name: /nueva tarjeta/i }).click();
+  await firstColumn.getByPlaceholder("Título de la tarjeta").fill("Playwright card");
+  await firstColumn.getByPlaceholder("Detalles").fill("Added via e2e.");
+  await firstColumn.getByRole("button", { name: /añadir tarjeta/i }).click();
   await expect(firstColumn.getByText("Playwright card")).toBeVisible();
 });
 

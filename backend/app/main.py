@@ -1,9 +1,14 @@
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
-app = FastAPI(title="Project Management MVP API")
+from backend.app.db.init_db import init_database
+from backend.app.kanban.router import router as kanban_router
+from backend.app.kanban.seed import seed_demo_data
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_STATIC_DIR = ROOT_DIR / "static" / "frontend"
@@ -12,6 +17,17 @@ INDEX_FILE = FRONTEND_STATIC_DIR / "index.html"
 
 def serve_index() -> FileResponse:
     return FileResponse(INDEX_FILE, headers={"Cache-Control": "no-store"})
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_database()
+    seed_demo_data()
+    yield
+
+
+app = FastAPI(title="Project Management MVP API", lifespan=lifespan)
+app.include_router(kanban_router)
 
 
 @app.get("/api/health")

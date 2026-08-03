@@ -1,7 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
+process.env.PM_E2E_DOCKER ??= "1";
+
 export default defineConfig({
   testDir: "./tests",
+  globalSetup: "./tests/docker-global-setup.ts",
   timeout: 60_000,
   expect: {
     timeout: 10_000,

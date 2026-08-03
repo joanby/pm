@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   closestCorners,
   DndContext,
@@ -16,21 +16,40 @@ import {
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
 import {
+  getSessionUsername,
   isSessionActive,
   setSessionActive,
   validateCredentials,
 } from "@/lib/auth";
-import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
+import {
+  createCard as createCardRequest,
+  deleteCard as deleteCardRequest,
+  fetchBoard,
+  KanbanApiError,
+  moveCardOnBoard,
+  renameColumn as renameColumnRequest,
+} from "@/lib/kanban-api";
+import { getCardPlacement, moveCard, type BoardData } from "@/lib/kanban";
 
 export const KanbanBoard = () => {
-  const [board, setBoard] = useState<BoardData>(() => initialData);
+  const [board, setBoard] = useState<BoardData | null>(null);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() =>
-    isSessionActive()
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    if (!isSessionActive()) {
+      return false;
+    }
+    return Boolean(getSessionUsername());
+  });
+  const [sessionUsername, setSessionUsername] = useState<string | null>(() =>
+    getSessionUsername()
   );
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isLoadingBoard, setIsLoadingBoard] = useState(false);
+  const [boardError, setBoardError] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const renameTimeouts = useRef<Record<string, number>>({});
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -46,57 +65,170 @@ export const KanbanBoard = () => {
     return closestCorners(args);
   };
 
-  useEffect(() => {
-    setIsAuthenticated(isSessionActive());
+  const loadBoard = useCallback(async (activeUsername: string) => {
+    setIsLoadingBoard(true);
+    setBoardError(null);
+    try {
+      const data = await fetchBoard(activeUsername);
+      setBoard(data);
+    } catch (error) {
+      const message =
+        error instanceof KanbanApiError
+          ? "Unable to load your board from the server."
+          : "Unexpected error while loading the board.";
+      setBoardError(message);
+      setBoard(null);
+    } finally {
+      setIsLoadingBoard(false);
+    }
   }, []);
 
-  const cardsById = useMemo(() => board.cards, [board.cards]);
+  useEffect(() => {
+    const hasSession = isSessionActive();
+    const storedUsername = getSessionUsername();
+    if (hasSession && !storedUsername) {
+      setSessionActive(false);
+      setIsAuthenticated(false);
+      setSessionUsername(null);
+      return;
+    }
+    setIsAuthenticated(hasSession);
+    setSessionUsername(storedUsername);
+    if (hasSession && storedUsername) {
+      void loadBoard(storedUsername);
+    }
+  }, [loadBoard]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(renameTimeouts.current).forEach((timeoutId) => {
+        window.clearTimeout(timeoutId);
+      });
+    };
+  }, []);
+
+  const cardsById = useMemo(() => board?.cards ?? {}, [board?.cards]);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveCardId(event.active.id as string);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveCardId(null);
 
-    if (!over || active.id === over.id) {
+    if (!over || active.id === over.id || !board || !sessionUsername) {
       return;
     }
 
-    setBoard((prev) => ({
-      ...prev,
-      columns: moveCard(prev.columns, active.id as string, over.id as string),
-    }));
+    const previousBoard = board;
+    const nextBoard: BoardData = {
+      ...board,
+      columns: moveCard(board.columns, active.id as string, over.id as string),
+    };
+    const placement = getCardPlacement(nextBoard.columns, active.id as string);
+
+    if (!placement) {
+      return;
+    }
+
+    setBoard(nextBoard);
+    setIsSyncing(true);
+    setBoardError(null);
+
+    try {
+      const syncedBoard = await moveCardOnBoard(
+        sessionUsername,
+        active.id as string,
+        placement.columnId,
+        placement.position
+      );
+      setBoard(syncedBoard);
+    } catch {
+      setBoard(previousBoard);
+      setBoardError("Unable to save the card move. Your last change was reverted.");
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const handleRenameColumn = (columnId: string, title: string) => {
-    setBoard((prev) => ({
-      ...prev,
-      columns: prev.columns.map((column) =>
-        column.id === columnId ? { ...column, title } : column
-      ),
-    }));
+    if (!board || !sessionUsername) {
+      return;
+    }
+
+    setBoard((prev) =>
+      prev
+        ? {
+            ...prev,
+            columns: prev.columns.map((column) =>
+              column.id === columnId ? { ...column, title } : column
+            ),
+          }
+        : prev
+    );
+
+    if (renameTimeouts.current[columnId]) {
+      window.clearTimeout(renameTimeouts.current[columnId]);
+    }
+
+    renameTimeouts.current[columnId] = window.setTimeout(async () => {
+      try {
+        await renameColumnRequest(sessionUsername, columnId, title);
+      } catch {
+        setBoardError("Unable to save the column name.");
+        await loadBoard(sessionUsername);
+      }
+    }, 400);
   };
 
-  const handleAddCard = (columnId: string, title: string, details: string) => {
-    const id = createId("card");
-    setBoard((prev) => ({
-      ...prev,
-      cards: {
-        ...prev.cards,
-        [id]: { id, title, details: details || "No details yet." },
-      },
-      columns: prev.columns.map((column) =>
-        column.id === columnId
-          ? { ...column, cardIds: [...column.cardIds, id] }
-          : column
-      ),
-    }));
+  const handleAddCard = async (columnId: string, title: string, details: string) => {
+    if (!board || !sessionUsername) {
+      return;
+    }
+
+    setIsSyncing(true);
+    setBoardError(null);
+
+    try {
+      const created = await createCardRequest(sessionUsername, columnId, {
+        title,
+        details: details || "No details yet.",
+      });
+      setBoard((prev) => {
+        if (!prev) {
+          return prev;
+        }
+        return {
+          ...prev,
+          cards: {
+            ...prev.cards,
+            [created.id]: created,
+          },
+          columns: prev.columns.map((column) =>
+            column.id === columnId
+              ? { ...column, cardIds: [...column.cardIds, created.id] }
+              : column
+          ),
+        };
+      });
+    } catch {
+      setBoardError("Unable to create the card.");
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
-  const handleDeleteCard = (columnId: string, cardId: string) => {
+  const handleDeleteCard = async (columnId: string, cardId: string) => {
+    if (!board || !sessionUsername) {
+      return;
+    }
+
+    const previousBoard = board;
     setBoard((prev) => {
+      if (!prev) {
+        return prev;
+      }
       return {
         ...prev,
         cards: Object.fromEntries(
@@ -112,28 +244,46 @@ export const KanbanBoard = () => {
         ),
       };
     });
+
+    setIsSyncing(true);
+    setBoardError(null);
+
+    try {
+      await deleteCardRequest(sessionUsername, cardId);
+    } catch {
+      setBoard(previousBoard);
+      setBoardError("Unable to delete the card.");
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const activeCard = activeCardId ? cardsById[activeCardId] : null;
 
-  const handleLogin = (event: FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (validateCredentials(username, password)) {
-      setSessionActive(true);
-      setIsAuthenticated(true);
-      setAuthError(null);
-      setPassword("");
+    if (!validateCredentials(username, password)) {
+      setAuthError("Invalid credentials. Use user/password.");
       return;
     }
-    setAuthError("Invalid credentials. Use user/password.");
+
+    setSessionActive(true, username);
+    setIsAuthenticated(true);
+    setSessionUsername(username);
+    setAuthError(null);
+    setPassword("");
+    await loadBoard(username);
   };
 
   const handleLogout = () => {
     setSessionActive(false);
     setIsAuthenticated(false);
+    setSessionUsername(null);
+    setBoard(null);
     setUsername("");
     setPassword("");
     setAuthError(null);
+    setBoardError(null);
   };
 
   if (!isAuthenticated) {
@@ -196,12 +346,48 @@ export const KanbanBoard = () => {
     );
   }
 
+  if (isLoadingBoard || !board) {
+    return (
+      <main className="mx-auto flex min-h-screen max-w-xl items-center px-6 py-16">
+        <section className="w-full rounded-3xl border border-[var(--stroke)] bg-white p-8 text-center shadow-[var(--shadow)]">
+          {boardError ? (
+            <>
+              <p role="alert" className="text-sm font-medium text-red-600">
+                {boardError}
+              </p>
+              {sessionUsername ? (
+                <button
+                  type="button"
+                  onClick={() => void loadBoard(sessionUsername)}
+                  className="mt-4 rounded-xl bg-[var(--secondary-purple)] px-4 py-3 text-sm font-semibold text-white"
+                >
+                  Retry
+                </button>
+              ) : null}
+            </>
+          ) : (
+            <p className="text-sm text-[var(--gray-text)]">Loading your board...</p>
+          )}
+        </section>
+      </main>
+    );
+  }
+
   return (
     <div className="relative overflow-hidden">
       <div className="pointer-events-none absolute left-0 top-0 h-[420px] w-[420px] -translate-x-1/3 -translate-y-1/3 rounded-full bg-[radial-gradient(circle,_rgba(32,157,215,0.25)_0%,_rgba(32,157,215,0.05)_55%,_transparent_70%)]" />
       <div className="pointer-events-none absolute bottom-0 right-0 h-[520px] w-[520px] translate-x-1/4 translate-y-1/4 rounded-full bg-[radial-gradient(circle,_rgba(117,57,145,0.18)_0%,_rgba(117,57,145,0.05)_55%,_transparent_75%)]" />
 
       <main className="relative mx-auto flex min-h-screen max-w-[1500px] flex-col gap-10 px-6 pb-16 pt-12">
+        {boardError ? (
+          <p
+            role="alert"
+            className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          >
+            {boardError}
+          </p>
+        ) : null}
+
         <header className="flex flex-col gap-6 rounded-[32px] border border-[var(--stroke)] bg-white/80 p-8 shadow-[var(--shadow)] backdrop-blur">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div>
@@ -215,6 +401,11 @@ export const KanbanBoard = () => {
                 Keep momentum visible. Rename columns, drag cards between stages,
                 and capture quick notes without getting buried in settings.
               </p>
+              {isSyncing ? (
+                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--primary-blue)]">
+                  Saving...
+                </p>
+              ) : null}
             </div>
             <div className="flex items-start gap-3">
               <div className="rounded-2xl border border-[var(--stroke)] bg-[var(--surface)] px-5 py-4">

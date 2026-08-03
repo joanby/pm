@@ -1,9 +1,20 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { resetDemoBoard } from "./e2e-helpers";
+
+test.beforeEach(async ({ request }) => {
+  if (process.env.PM_E2E_DOCKER !== "1") {
+    return;
+  }
+
+  await resetDemoBoard(request);
+});
+
 const login = async (page: Page) => {
   await page.getByPlaceholder("user").fill("user");
   await page.getByPlaceholder("password").fill("password");
   await page.getByRole("button", { name: /sign in/i }).click();
+  await expect(page.locator('[data-testid^="column-"]')).toHaveCount(5);
 };
 
 test("loads the kanban board", async ({ page }) => {
@@ -81,4 +92,20 @@ test("logs out and hides the board", async ({ page }) => {
   await page.getByRole("button", { name: /log out/i }).click();
   await expect(page.getByRole("heading", { name: /sign in to kanban studio/i })).toBeVisible();
   await expect(page.locator('[data-testid^="column-"]')).toHaveCount(0);
+});
+
+test("persists a card after reload", async ({ page }) => {
+  await page.goto("/");
+  await login(page);
+  const firstColumn = page.locator('[data-testid^="column-"]').first();
+  await firstColumn.getByRole("button", { name: /add a card/i }).click();
+  await firstColumn.getByPlaceholder("Card title").fill("Persisted card");
+  await firstColumn.getByPlaceholder("Details").fill("Survives reload.");
+  await firstColumn.getByRole("button", { name: /add card/i }).click();
+  await expect(firstColumn.getByText("Persisted card")).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Kanban Studio" })).toBeVisible();
+  await expect(page.locator('[data-testid^="column-"]')).toHaveCount(5);
+  await expect(page.getByText("Persisted card")).toBeVisible();
 });

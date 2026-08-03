@@ -11,6 +11,80 @@
 
 ---
 
+## Estado actual del proyecto
+
+| Parte | Título | Estado |
+|-------|--------|--------|
+| 1 | Planificación | Completada |
+| 2 | Docker + FastAPI + scripts | Completada |
+| 3 | Frontend estático integrado | Completada |
+| 4 | Login simulado | Completada |
+| 5 | Modelado de base de datos | Completada (aprobada) |
+| 6 | Backend Kanban | Completada |
+| 7 | Frontend + Backend persistente | Completada |
+| 8 | Conectividad IA (OpenRouter) | Pendiente |
+| 9 | IA con salidas estructuradas | Pendiente |
+| 10 | Widget lateral de chat IA | Pendiente |
+
+**Verificación reciente (local):** 23 tests backend (pytest), 15 tests unitarios frontend (Vitest), 6/6 E2E Docker (`npm run test:e2e:docker` contra `http://localhost:8000`).
+
+**Siguiente paso planificado:** Parte 8 (conectividad OpenRouter).
+
+---
+
+## Decisiones de diseño transversales (Partes 2-7)
+
+Decisiones tomadas durante la implementación y no obvias desde el checklist de cada parte:
+
+### Infraestructura y Docker
+
+- **Gestión de paquetes Python en contenedor:** `uv pip install` (imagen `ghcr.io/astral-sh/uv:python3.12-bookworm-slim`), sin `pip` directo.
+- **Build multi-stage:** etapa Node compila el frontend (`next build` con `output: "export"`) y copia `out/` a `backend/static/frontend/`.
+- **Esquema BD en runtime:** la app lee `docs/db-schema.json` al arrancar (`backend/app/db/schema.py`). En Docker se copia explícitamente a `/app/docs/db-schema.json`; `.dockerignore` excluye `docs/*` excepto `docs/db-schema.json`.
+- **Persistencia en Docker:** volumen nombrado `pm-data` montado en `/app/backend/data` (`docker-compose.yml`). La BD SQLite vive en `backend/data/pm.db`.
+- **Scripts de arranque:** preferir `scripts/start.bat` en Windows si PowerShell bloquea `.ps1`.
+
+### Autenticación MVP (Partes 4, 6 y 7)
+
+- **Login simulado en frontend:** credenciales `user/password`; sesión en `localStorage` (`pm-mvp-auth`, `pm-mvp-username`).
+- **Identificación en backend:** header HTTP `X-MVP-Username: user` en todas las rutas Kanban. No hay JWT ni cookies de sesión en el MVP.
+- **Coherencia:** el username guardado en sesión cliente se reenvía en cada petición API.
+
+### Persistencia y modelo de datos (Partes 5 y 6)
+
+- **Motor MVP:** SQLite local; evolución futura prevista a **Supabase** sin cambiar el modelo relacional documentado.
+- **Esquema machine-readable:** `docs/db-schema.json`; diseño y trade-offs en `docs/db-design.md`.
+- **IDs como TEXT:** compatibles con IDs del frontend (`col-backlog`, `card-1`, IDs generados en cliente).
+- **Seed demo idempotente:** al arrancar la app (`lifespan` en `main.py`), si no existe el usuario `user` se insertan tablero, 5 columnas y 8 tarjetas demo (`backend/app/kanban/seed.py`).
+- **Un tablero por usuario:** regla de negocio en capa de aplicación, no UNIQUE en BD.
+- **Password en texto plano:** coherente con login simulado; documentado como no apto para producción.
+
+### API Kanban (Parte 6)
+
+- **Contrato documentado:** `docs/api-kanban.md`.
+- **Formato del tablero:** JSON con `columns[]` (cada una con `cardIds`) y `cards{}` (diccionario id → tarjeta), alineado con el tipo `BoardData` del frontend.
+- **Arquitectura backend:** router → service → repository sobre SQLite.
+- **Sincronización completa:** `PUT /api/board` reemplaza el estado entero del tablero (útil para tests y futura IA).
+- **Movimiento de tarjetas:** `PUT /api/cards/{id}/move` devuelve el tablero completo actualizado.
+
+### Frontend conectado a API (Parte 7)
+
+- **Cliente API:** `frontend/src/lib/kanban-api.ts` (fetch con header `X-MVP-Username`).
+- **Carga inicial:** tras login o restauración de sesión, `GET /api/board`.
+- **Renombrado de columnas:** debounce de 400 ms antes de `PATCH /api/columns/{id}`.
+- **Alta de tarjetas:** espera respuesta `POST` antes de actualizar UI (no optimista).
+- **Movimiento y borrado:** UI optimista con rollback si la API falla.
+- **Estados UX:** loading, error con reintento, indicador “Saving…” durante sync.
+
+### Pruebas E2E Docker (Partes 3 y 7)
+
+- **Config dedicada:** `frontend/playwright.docker.config.ts` apunta a `http://127.0.0.1:8000`.
+- **Aislamiento de estado:** antes de cada test E2E Docker se resetea el tablero vía `PUT /api/board` con el estado demo (`frontend/tests/e2e-helpers.ts`), porque la BD SQLite del volumen Docker persiste entre ejecuciones.
+- **Global setup:** `frontend/tests/docker-global-setup.ts` espera `/api/health` y hace reset inicial.
+- **Variable de entorno:** `PM_E2E_DOCKER=1` activa el reset en `beforeEach` de `kanban.spec.ts`; los E2E de desarrollo (`:3000`) no lo usan.
+
+---
+
 ## Parte 1: Planificación
 
 ### Objetivo
@@ -59,7 +133,13 @@ Disponer de una base ejecutable local con Docker, backend FastAPI y scripts mult
 - Configuración Docker en raíz.
 - Estructura inicial de backend en `backend/`.
 - Scripts de inicio/parada en `scripts/` para Mac, Windows y Linux.
-- Endpoint HTML estático "hola mundo" y endpoint API de verificación.
+- Endpoint HTML estático y endpoint API de verificación.
+- Imagen incluye esquema BD (`docs/db-schema.json`) necesario para el lifespan de la app.
+
+### Decisiones tomadas
+- Puerto único `8000` para frontend estático + API.
+- Volumen Docker `pm-data` para persistir SQLite entre reinicios del contenedor.
+- Ver detalle de build multi-stage y `uv` en la sección *Decisiones de diseño transversales* más arriba.
 
 ### Lista de verificación
 - [x] Crear Dockerfile y configuración de ejecución local.
@@ -98,6 +178,12 @@ Compilar y servir el frontend desde el backend para mostrar el tablero demo en `
 ### Entregables
 - Pipeline de build del frontend integrado en la imagen/flujo local.
 - Backend sirviendo estáticos del frontend en `/`.
+- Tests de integración de assets estáticos y fallback SPA.
+
+### Decisiones tomadas
+- Next.js con `output: "export"` (sin SSR en producción Docker).
+- Rutas de assets en `/_next/*`; fallback a `index.html` para rutas SPA no encontradas.
+- E2E Docker separado de E2E dev (`playwright.docker.config.ts` vs `playwright.config.ts`).
 
 ### Lista de verificación
 - [x] Configurar build de frontend para despliegue estático.
@@ -129,8 +215,12 @@ Requerir autenticación inicial para ver el tablero y permitir cierre de sesión
 
 ### Entregables
 - Pantalla/flujo de login en `/` o ruta definida.
-- Control de sesión local del MVP.
+- Control de sesión local del MVP (`frontend/src/lib/auth.ts`).
 - Flujo de logout.
+
+### Decisiones tomadas
+- Sesión en `localStorage` (no cookies ni token); claves `pm-mvp-auth` y `pm-mvp-username`.
+- Validación de credenciales solo en cliente en esta fase; el backend confía en `X-MVP-Username` (Parte 6).
 
 ### Lista de verificación
 - [x] Definir guard de acceso al tablero.
@@ -168,24 +258,31 @@ Definir esquema de persistencia para Kanban con proyección multiusuario.
 
 ### Entregables
 - `docs/db-schema.json` con esquema propuesto.
-- Documento en `docs/` con explicación del modelo y decisiones.
+- Documento en `docs/` con explicación del modelo y decisiones (`docs/db-design.md`).
+- Capa de inicialización SQLite en `backend/app/db/` (schema loader, `init_database()`).
+
+### Decisiones tomadas
+- SQLite ahora; Supabase después (modelo portable, conexión abstracta en Parte 6).
+- Tabla `chat_messages` incluida desde el diseño para Partes 9-10.
+- Esquema JSON como fuente única para generar DDL en runtime (no migraciones separadas en MVP).
+- Aprobación explícita del usuario obtenida antes de Parte 6.
 
 ### Lista de verificación
-- [ ] Definir entidades: usuarios, tableros, columnas, tarjetas.
-- [ ] Definir relaciones y claves.
-- [ ] Definir campos mínimos para historial/conversación IA.
-- [ ] Guardar propuesta en JSON.
-- [ ] Documentar razonamiento y trade-offs en `docs/`.
-- [ ] Solicitar aprobación del usuario.
+- [x] Definir entidades: usuarios, tableros, columnas, tarjetas.
+- [x] Definir relaciones y claves.
+- [x] Definir campos mínimos para historial/conversación IA.
+- [x] Guardar propuesta en JSON.
+- [x] Documentar razonamiento y trade-offs en `docs/`.
+- [x] Solicitar aprobación del usuario.
 
 ### Pruebas
 - **Unitarias:** validación del esquema JSON (estructura y campos requeridos).
 - **Integración:** creación inicial de SQLite desde esquema/migración base.
 
 ### Criterios de éxito
-- [ ] Esquema JSON claro, consistente y extensible.
-- [ ] Documento de diseño aprobado por el usuario.
-- [ ] BD puede inicializarse si no existe.
+- [x] Esquema JSON claro, consistente y extensible.
+- [x] Documento de diseño aprobado por el usuario.
+- [x] BD puede inicializarse si no existe.
 
 ### Riesgos y mitigación
 - Riesgo: esquema insuficiente para evolución multiusuario.
@@ -203,24 +300,32 @@ Exponer API para leer y modificar el tablero Kanban por usuario.
 
 ### Entregables
 - Endpoints backend para tablero, columnas y tarjetas.
-- Capa de acceso a datos SQLite.
+- Capa de acceso a datos SQLite (`backend/app/kanban/`).
 - Creación automática de BD al arrancar si no existe.
+- Seed demo idempotente al arrancar.
+- Contrato API documentado en `docs/api-kanban.md`.
+
+### Decisiones tomadas
+- Autenticación por header `X-MVP-Username` (sin sesión server-side).
+- Respuestas y payloads alineados con `BoardData` del frontend (`cardIds` en columnas).
+- Errores HTTP: `401` (sin header), `404` (recurso), `400` (negocio), `422` (validación).
+- Tests de integración con BD temporal vía `PM_DATABASE_PATH` en fixtures pytest.
 
 ### Lista de verificación
-- [ ] Implementar modelo y repositorio de persistencia.
-- [ ] Implementar rutas GET/PUT/POST/PATCH/DELETE necesarias.
-- [ ] Implementar validación de payloads.
-- [ ] Manejar errores de forma consistente.
-- [ ] Documentar contrato API mínimo.
+- [x] Implementar modelo y repositorio de persistencia.
+- [x] Implementar rutas GET/PUT/POST/PATCH/DELETE necesarias.
+- [x] Implementar validación de payloads.
+- [x] Manejar errores de forma consistente.
+- [x] Documentar contrato API mínimo.
 
 ### Pruebas
 - **Unitarias:** servicios de negocio, validaciones, repositorios.
 - **Integración:** llamadas reales a API con DB temporal y verificación de persistencia.
 
 ### Criterios de éxito
-- [ ] API permite operaciones Kanban por usuario.
-- [ ] Persistencia funciona tras reinicio.
-- [ ] BD se crea automáticamente cuando no existe.
+- [x] API permite operaciones Kanban por usuario.
+- [x] Persistencia funciona tras reinicio.
+- [x] BD se crea automáticamente cuando no existe.
 
 ### Riesgos y mitigación
 - Riesgo: incoherencias entre modelo de datos y contratos API.
@@ -237,24 +342,32 @@ Conectar el frontend a la API para que el tablero deje de ser solo en memoria.
 - Parte 6 completada.
 
 ### Entregables
-- Cliente frontend para consumir API Kanban.
-- Estado UI sincronizado con backend.
-- Operaciones de tablero persistidas.
+- Cliente frontend para consumir API Kanban (`frontend/src/lib/kanban-api.ts`).
+- Estado UI sincronizado con backend (`KanbanBoard.tsx` con carga, sync y errores).
+- Operaciones de tablero persistidas (rename, create, delete, move).
+- E2E Docker con verificación de persistencia tras recarga (`persists a card after reload`).
+
+### Decisiones tomadas
+- Sesión cliente (`localStorage`) + header API: el username autenticado se usa en todas las peticiones.
+- Estrategia mixta de sync: optimista en drag/delete; persistencia explícita en create y rename debounced.
+- Mock de API solo en tests unitarios Vitest; E2E Docker usa API real en contenedor.
+- Reset del tablero demo en E2E Docker para evitar estado sucio del volumen SQLite persistente.
 
 ### Lista de verificación
-- [ ] Sustituir mock inicial por carga desde API.
-- [ ] Persistir renombrado de columnas.
-- [ ] Persistir alta/borrado/movimiento de tarjetas.
-- [ ] Gestionar estados de carga/error.
+- [x] Sustituir mock inicial por carga desde API.
+- [x] Persistir renombrado de columnas.
+- [x] Persistir alta/borrado/movimiento de tarjetas.
+- [x] Gestionar estados de carga/error.
 
 ### Pruebas
 - **Unitarias:** cliente API, transformaciones de datos, reducers/estado local.
 - **Integración:** operación completa UI -> API -> DB -> recarga UI.
+- **E2E Docker:** `npm run test:e2e:docker` (6 escenarios, incl. persistencia tras reload).
 
 ### Criterios de éxito
-- [ ] Cambios Kanban sobreviven recarga de página.
-- [ ] UI refleja correctamente estado persistido.
-- [ ] Manejo básico de errores sin romper UX.
+- [x] Cambios Kanban sobreviven recarga de página.
+- [x] UI refleja correctamente estado persistido.
+- [x] Manejo básico de errores sin romper UX.
 
 ### Riesgos y mitigación
 - Riesgo: regresión funcional al sustituir estado local por API.

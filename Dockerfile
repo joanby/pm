@@ -20,6 +20,7 @@ COPY backend/requirements.txt /tmp/requirements.txt
 RUN uv pip install --system --no-cache -r /tmp/requirements.txt
 
 COPY backend /app/backend
+COPY docs/db-schema.json /app/docs/db-schema.json
 COPY --from=frontend-builder /frontend/out /app/backend/static/frontend
 
 EXPOSE 8000

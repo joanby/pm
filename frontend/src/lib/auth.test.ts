@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   AUTH_STORAGE_KEY,
+  AUTH_USERNAME_KEY,
   isSessionActive,
   setSessionActive,
   validateCredentials,
@@ -22,11 +23,13 @@ describe("auth", () => {
 
   it("tracks session state in localStorage", () => {
     expect(isSessionActive()).toBe(false);
-    setSessionActive(true);
+    setSessionActive(true, "user");
     expect(window.localStorage.getItem(AUTH_STORAGE_KEY)).toBe("1");
+    expect(window.localStorage.getItem(AUTH_USERNAME_KEY)).toBe("user");
     expect(isSessionActive()).toBe(true);
     setSessionActive(false);
     expect(window.localStorage.getItem(AUTH_STORAGE_KEY)).toBeNull();
+    expect(window.localStorage.getItem(AUTH_USERNAME_KEY)).toBeNull();
     expect(isSessionActive()).toBe(false);
   });
 });

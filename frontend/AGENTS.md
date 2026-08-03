@@ -26,6 +26,8 @@ Este frontend implementa un demo funcional de tablero Kanban en Next.js. Se comp
   - `NewCardForm.tsx`: alta de nuevas tarjetas.
 - `src/lib/auth.ts`
   - credenciales MVP, validación y sesión en `localStorage`
+- `src/lib/kanban-api.ts`
+  - cliente fetch para la API Kanban (`X-MVP-Username`)
 - `src/lib/kanban.ts`
   - tipos (`Card`, `Column`, `BoardData`)
   - datos iniciales `initialData`
@@ -38,6 +40,7 @@ Este frontend implementa un demo funcional de tablero Kanban en Next.js. Se comp
 - Implementado:
   - Visualización de tablero en `/` (servido por backend vía Docker).
   - Login simulado en cliente con `user/password` (`src/lib/auth.ts`).
+  - Carga y persistencia del tablero vía API (`src/lib/kanban-api.ts`).
   - Guard de acceso: el tablero solo se muestra con sesión activa.
   - Logout que invalida la sesión en cliente.
   - 5 columnas fijas renombrables.
@@ -50,15 +53,13 @@ Este frontend implementa un demo funcional de tablero Kanban en Next.js. Se comp
 
 ## Brechas para integración (siguientes fases)
 
-- Falta reemplazar `initialData` en memoria por lectura/escritura vía API.
-- Falta endpoint backend para operaciones Kanban persistentes.
 - Falta integración de chat IA y aplicación de salidas estructuradas al tablero.
 
 ## Estado de datos y persistencia
 
-- El estado del board vive en memoria (`useState`) dentro de `KanbanBoard`.
-- Los datos iniciales se cargan desde `initialData` en `src/lib/kanban.ts`.
-- No hay llamadas API ni persistencia en SQLite en esta fase.
+- El tablero se carga desde `GET /api/board` al iniciar sesión.
+- Las operaciones (renombrar, crear, borrar, mover) se sincronizan con la API backend.
+- Header `X-MVP-Username` identifica al usuario demo en el backend.
 
 ## Pruebas disponibles
 

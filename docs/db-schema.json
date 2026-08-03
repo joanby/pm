@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "engine": "sqlite",
+  "description": "Esquema de persistencia MVP para tablero Kanban multiusuario (SQLite). Preparado para evolucionar a Supabase en fases posteriores.",
+  "tables": {
+    "users": {
+      "description": "Usuarios del sistema. MVP: un usuario demo; modelo listo para multiusuario.",
+      "columns": {
+        "id": { "type": "TEXT", "primaryKey": true, "required": true },
+        "username": { "type": "TEXT", "required": true, "unique": true },
+        "password": { "type": "TEXT", "required": true },
+        "created_at": { "type": "TEXT", "required": true }
+      },
+      "foreignKeys": [],
+      "indexes": [
+        { "name": "idx_users_username", "columns": ["username"], "unique": true }
+      ]
+    },
+    "boards": {
+      "description": "Tableros Kanban. Regla MVP: un tablero por usuario.",
+      "columns": {
+        "id": { "type": "TEXT", "primaryKey": true, "required": true },
+        "user_id": { "type": "TEXT", "required": true },
+        "title": { "type": "TEXT", "required": true, "default": "Kanban Studio" },
+        "created_at": { "type": "TEXT", "required": true },
+        "updated_at": { "type": "TEXT", "required": true }
+      },
+      "foreignKeys": [
+        {
+          "column": "user_id",
+          "references": { "table": "users", "column": "id" },
+          "onDelete": "CASCADE"
+        }
+      ],
+      "indexes": [
+        { "name": "idx_boards_user_id", "columns": ["user_id"] }
+      ]
+    },
+    "columns": {
+      "description": "Columnas fijas del tablero, renombrables y ordenables por posición.",
+      "columns": {
+        "id": { "type": "TEXT", "primaryKey": true, "required": true },
+        "board_id": { "type": "TEXT", "required": true },
+        "title": { "type": "TEXT", "required": true },
+        "position": { "type": "INTEGER", "required": true },
+        "created_at": { "type": "TEXT", "required": true },
+        "updated_at": { "type": "TEXT", "required": true }
+      },
+      "foreignKeys": [
+        {
+          "column": "board_id",
+          "references": { "table": "boards", "column": "id" },
+          "onDelete": "CASCADE"
+        }
+      ],
+      "indexes": [
+        { "name": "idx_columns_board_id", "columns": ["board_id"] },
+        {
+          "name": "idx_columns_board_position",
+          "columns": ["board_id", "position"],
+          "unique": true
+        }
+      ]
+    },
+    "cards": {
+      "description": "Tarjetas Kanban dentro de una columna.",
+      "columns": {
+        "id": { "type": "TEXT", "primaryKey": true, "required": true },
+        "column_id": { "type": "TEXT", "required": true },
+        "title": { "type": "TEXT", "required": true },
+        "details": { "type": "TEXT", "required": true, "default": "" },
+        "position": { "type": "INTEGER", "required": true },
+        "created_at": { "type": "TEXT", "required": true },
+        "updated_at": { "type": "TEXT", "required": true }
+      },
+      "foreignKeys": [
+        {
+          "column": "column_id",
+          "references": { "table": "columns", "column": "id" },
+          "onDelete": "CASCADE"
+        }
+      ],
+      "indexes": [
+        { "name": "idx_cards_column_id", "columns": ["column_id"] },
+        {
+          "name": "idx_cards_column_position",
+          "columns": ["column_id", "position"],
+          "unique": true
+        }
+      ]
+    },
+    "chat_messages": {
+      "description": "Historial mínimo de conversación IA por tablero (Partes 9-10).",
+      "columns": {
+        "id": { "type": "TEXT", "primaryKey": true, "required": true },
+        "board_id": { "type": "TEXT", "required": true },
+        "role": { "type": "TEXT", "required": true, "check": ["user", "assistant"] },
+        "content": { "type": "TEXT", "required": true },
+        "created_at": { "type": "TEXT", "required": true }
+      },
+      "foreignKeys": [
+        {
+          "column": "board_id",
+          "references": { "table": "boards", "column": "id" },
+          "onDelete": "CASCADE"
+        }
+      ],
+      "indexes": [
+        { "name": "idx_chat_messages_board_id", "columns": ["board_id"] },
+        {
+          "name": "idx_chat_messages_board_created_at",
+          "columns": ["board_id", "created_at"]
+        }
+      ]
+    }
+  },
+  "relationships": [
+    { "from": "users", "to": "boards", "cardinality": "1:N", "via": "boards.user_id" },
+    { "from": "boards", "to": "columns", "cardinality": "1:N", "via": "columns.board_id" },
+    { "from": "columns", "to": "cards", "cardinality": "1:N", "via": "cards.column_id" },
+    { "from": "boards", "to": "chat_messages", "cardinality": "1:N", "via": "chat_messages.board_id" }
+  ],
+  "mvpRules": [
+    "Credenciales oficiales: user/password.",
+    "Un tablero Kanban por usuario.",
+    "Cinco columnas iniciales por tablero.",
+    "Login simulado en MVP; password en BD es referencia para evolución backend."
+  ]
+}

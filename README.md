@@ -96,6 +96,16 @@ cd frontend
 npm run test:e2e:docker
 ```
 
+### API Kanban (Parte 6)
+
+Con el contenedor en marcha:
+
+```bash
+curl -H "X-MVP-Username: user" http://localhost:8000/api/board
+```
+
+Ver [docs/api-kanban.md](docs/api-kanban.md) para el contrato completo.
+
 ## Estructura del proyecto
 
 ```
@@ -123,4 +133,8 @@ pm/
 - **Parte 2 completada:** Docker, FastAPI, scripts multiplataforma, `/api/health` y servicio de estáticos en `/`.
 - **Parte 3 completada:** frontend Next.js compilado e integrado en la imagen Docker; tablero Kanban servido por el backend en `/`.
 - **Parte 4 completada:** login simulado en cliente con `user/password`, guard de acceso y logout.
-- Siguiente fase planificada: Parte 5 (modelado de base de datos) — ver [docs/PLAN.md](docs/PLAN.md).
+- **Parte 5 completada:** esquema SQLite aprobado; BD inicializable vía `init_database()`.
+- **Parte 6 completada:** API Kanban con persistencia SQLite (`/api/board`, columnas y tarjetas).
+- **Parte 7 completada:** frontend conectado a la API; cambios persisten tras recarga.
+- Documentación BD: [docs/db-design.md](docs/db-design.md) · API: [docs/api-kanban.md](docs/api-kanban.md)
+- Siguiente fase: Parte 8 (OpenRouter) — ver [docs/PLAN.md](docs/PLAN.md).

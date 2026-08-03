@@ -11,5 +11,6 @@ frontend/.next
 frontend/test-results
 frontend/playwright-report
 
-docs
+docs/*
+!docs/db-schema.json
 *.md

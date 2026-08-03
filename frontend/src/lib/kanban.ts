@@ -166,3 +166,16 @@ export const createId = (prefix: string) => {
   const timePart = Date.now().toString(36);
   return `${prefix}-${randomPart}${timePart}`;
 };
+
+export const getCardPlacement = (
+  columns: Column[],
+  cardId: string
+): { columnId: string; position: number } | null => {
+  for (const column of columns) {
+    const position = column.cardIds.indexOf(cardId);
+    if (position !== -1) {
+      return { columnId: column.id, position };
+    }
+  }
+  return null;
+};

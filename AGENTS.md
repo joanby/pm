@@ -35,7 +35,10 @@ Construir una aplicación de gestión de proyectos con tablero Kanban y chat con
 - **Parte 2 completada:** Docker, FastAPI, scripts multiplataforma, `/api/health` y servicio de estáticos en `/`.
 - **Parte 3 completada:** frontend Next.js exportado e integrado en Docker; tablero Kanban servido por el backend.
 - **Parte 4 completada:** login simulado en cliente (`user/password`), guard de acceso y logout.
-- Las fases restantes (BD, API persistente, IA) se definen en `docs/PLAN.md`.
+- **Parte 5 completada:** esquema SQLite aprobado e inicialización de BD.
+- **Parte 6 completada:** API Kanban con persistencia SQLite.
+- **Parte 7 completada:** frontend sincronizado con la API Kanban.
+- Siguiente fase: Parte 8 (OpenRouter) — ver `docs/PLAN.md`.
 
 ## Flujo funcional esperado (alto nivel)
 

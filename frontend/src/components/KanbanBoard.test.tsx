@@ -5,13 +5,39 @@ import { KanbanBoard } from "@/components/KanbanBoard";
 const getFirstColumn = () => screen.getAllByTestId(/column-/i)[0];
 
 describe("KanbanBoard", () => {
-  it("renders five columns", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  const login = async () => {
+    await userEvent.type(screen.getByPlaceholderText("user"), "user");
+    await userEvent.type(screen.getByPlaceholderText("password"), "password");
+    await userEvent.click(screen.getByRole("button", { name: /sign in/i }));
+  };
+
+  it("requires login before showing the board", () => {
     render(<KanbanBoard />);
+    expect(screen.getByRole("heading", { name: /sign in to kanban studio/i })).toBeInTheDocument();
+    expect(screen.queryAllByTestId(/column-/i)).toHaveLength(0);
+  });
+
+  it("shows an error for invalid credentials", async () => {
+    render(<KanbanBoard />);
+    await userEvent.type(screen.getByPlaceholderText("user"), "wrong");
+    await userEvent.type(screen.getByPlaceholderText("password"), "wrong");
+    await userEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(screen.getByRole("alert")).toHaveTextContent(/invalid credentials/i);
+  });
+
+  it("renders five columns after login", async () => {
+    render(<KanbanBoard />);
+    await login();
     expect(screen.getAllByTestId(/column-/i)).toHaveLength(5);
   });
 
   it("renames a column", async () => {
     render(<KanbanBoard />);
+    await login();
     const column = getFirstColumn();
     const input = within(column).getByLabelText("Column title");
     await userEvent.clear(input);
@@ -21,6 +47,7 @@ describe("KanbanBoard", () => {
 
   it("adds and removes a card", async () => {
     render(<KanbanBoard />);
+    await login();
     const column = getFirstColumn();
     const addButton = within(column).getByRole("button", {
       name: /add a card/i,

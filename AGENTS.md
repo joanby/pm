@@ -1,53 +1,79 @@
 # Aplicación de Gestión de Proyectos MVP
 
-## Requisitos de Negocio
+## Objetivo del producto
 
-Este proyecto está construyendo una Aplicación de Gestión de Proyectos. Características principales:
-- Un usuario puede iniciar sesión
-- Cuando inicia sesión, el usuario ve un tablero Kanban que representa su proyecto
-- El tablero Kanban tiene columnas fijas que se pueden renombrar
-- Las tarjetas del tablero Kanban se pueden mover con arrastrar y soltar, y editar
-- Hay una característica de chat con IA en la barra lateral; la IA puede crear / editar / mover una o más tarjetas
+Construir una aplicación de gestión de proyectos con tablero Kanban y chat con IA, ejecutable en local mediante Docker, con una base sólida para evolucionar de MVP a versión multiusuario.
 
-## Limitaciones
+## Funcionalidades objetivo (MVP)
 
-Para el MVP, solo habrá un inicio de sesión de usuario (codificado como 'user' y 'password'), pero la base de datos admitirá múltiples usuarios en el futuro.
+- Inicio de sesión simulado.
+- Visualización de un tablero Kanban por usuario.
+- Columnas fijas renombrables.
+- Tarjetas editables y movibles con arrastrar y soltar.
+- Chat lateral con IA capaz de crear, editar o mover tarjetas.
 
-Para el MVP, solo habrá 1 tablero Kanban por usuario que inicie sesión.
+## Reglas de negocio del MVP
 
-Para el MVP, esto se ejecutará localmente (en un contenedor docker)
+- Credenciales oficiales del MVP: `user/password`.
+- Solo 1 tablero Kanban por usuario.
+- Se ejecuta localmente en contenedor Docker.
+- Aunque el login es simulado, el modelo de datos debe prepararse para múltiples usuarios.
 
-## Decisiones Técnicas
+## Arquitectura y decisiones técnicas
 
-- Frontend NextJS
-- Backend Python FastAPI, incluyendo servir el sitio estático NextJS en /
-- Todo empaquetado en un contenedor Docker
-- Usar "uv" como gestor de paquetes para python en el contenedor Docker
-- Usar OpenRouter para las llamadas de IA. Una OPENROUTER_API_KEY está en .env en la raíz del proyecto
-- Usar `openai/gpt-oss-120b:free` como modelo
-- Usar base de datos SQLLite local, creando una nueva bd si no existe
-- Scripts de inicio y parada del servidor para Mac, PC, Linux en scripts/
+- Frontend: Next.js.
+- Backend: FastAPI (Python), incluyendo servir frontend estático en `/`.
+- Contenedorización: Docker para todo el sistema.
+- Gestión de paquetes Python en contenedor: `uv`.
+- IA: OpenRouter con API key en `.env` (raíz del proyecto).
+- Modelo IA objetivo: `openai/gpt-oss-120b:free`.
+- Persistencia: SQLite local; crear BD automáticamente si no existe.
+- Automatización local: scripts de inicio/parada para Mac, Windows y Linux en `scripts/`.
 
-## Punto de Partida
+## Estado actual del proyecto
 
-Un MVP funcional del frontend ya ha sido construido y está en frontend. Esto aún no está diseñado para la configuración de Docker. Es una demostración puramente frontend.
+- Existe un MVP funcional de frontend en `frontend/`.
+- Ese frontend es actualmente una demo desacoplada de Docker/backend.
+- La integración completa se planifica en las fases definidas en `docs/PLAN.md`.
 
-## Esquema de Color
+## Flujo funcional esperado (alto nivel)
 
-- Amarillo Acentuado: `#ecad0a` - líneas acentuadas, destacados
-- Azul Primario: `#209dd7` - enlaces, secciones clave
-- Púrpura Secundario: `#753991` - botones de envío, acciones importantes
-- Azul Marino Oscuro: `#032147` - títulos principales
-- Texto Gris: `#888888` - texto de apoyo, etiquetas
+1. El usuario abre `/` y se autentica con `user/password`.
+2. La app muestra su tablero Kanban.
+3. El usuario puede operar el tablero manualmente (editar/mover tarjetas).
+4. El usuario chatea con la IA en la barra lateral.
+5. El backend envía a la IA el estado del Kanban + prompt + historial.
+6. La IA responde texto y, opcionalmente, cambios estructurados de Kanban.
+7. Si hay cambios de Kanban, se persisten y se reflejan en UI.
 
-## Estándares de Codificación
+## Fases de trabajo
 
-1. Usar las últimas versiones de librerías y enfoques idiomáticos a partir de hoy
-2. Mantenerlo simple - NUNCA sobre-ingenierizar, SIEMPRE simplificar, NO hay programación defensiva innecesaria. Sin características extra - enfócate en la simplicidad.
-3. Ser conciso. Mantener README mínimo. IMPORTANTE: nunca emojis
-4. Cuando encuentres problemas, siempre identifica la causa raíz antes de intentar una solución. No adivines. Prueba con evidencia, luego corrige la causa raíz.
+La ejecución por fases (planificación, estructura, integración frontend/backend, login, base de datos e IA) se define en `docs/PLAN.md`. Cualquier trabajo nuevo debe alinearse con ese plan y su orden lógico de dependencias.
 
-## Documentación de Trabajo
+## Criterios de calidad mínimos
 
-Todos los documentos para planificación y ejecución de este proyecto estarán en el directorio docs/.
-Por favor revisa el documento docs/PLAN.md antes de continuar.
+- Simplicidad sobre complejidad: sin sobreingeniería ni features extra.
+- Cambios pequeños, claros y verificables.
+- Pruebas asociadas a cada fase antes de avanzar.
+- Diagnóstico por causa raíz antes de corregir defectos.
+- Documentación breve y actualizada (sin texto superfluo).
+
+## Esquema de color UI
+
+- Amarillo acento: `#ecad0a`.
+- Azul primario: `#209dd7`.
+- Púrpura secundario: `#753991`.
+- Azul marino oscuro: `#032147`.
+- Gris texto auxiliar: `#888888`.
+
+## Convenciones para agentes
+
+- Revisar `docs/PLAN.md` antes de ejecutar cambios.
+- Mantener consistencia de credenciales (`user/password`) en código y docs.
+- No introducir funcionalidades fuera del alcance de la fase actual.
+- Priorizar cambios que mantengan la trazabilidad entre requisito, implementación y prueba.
+
+## Documentación de referencia
+
+- Plan principal: `docs/PLAN.md`.
+- Guías específicas por área: `backend/AGENTS.md`, `scripts/AGENTS.md` y futuras guías en subdirectorios.

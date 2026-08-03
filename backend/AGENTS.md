@@ -18,10 +18,14 @@ Este backend implementa la base de la API del proyecto con FastAPI y sirve el fr
 ## Ejecución en contenedor (multi-stage)
 
 - El `Dockerfile` compila primero el frontend en una etapa Node y copia `out/` al backend.
-- La etapa final Python instala dependencias con `uv` y arranca `uvicorn`.
+- La etapa final usa la imagen `ghcr.io/astral-sh/uv:python3.12-bookworm-slim` (sin `pip`) e instala dependencias con `uv pip install`.
 - `docker-compose.yml` expone el backend en `http://localhost:8000`.
 
 ## Próximos pasos (según plan)
 
-- Añadir login simulado (Parte 4).
 - Persistencia SQLite y rutas Kanban (Partes 5-7).
+
+## Pruebas de integración estática (Parte 3)
+
+- `tests/integration/test_home_page.py`: `/` sirve el HTML del Kanban.
+- `tests/integration/test_static_assets.py`: assets `/_next/*`, favicon y fallback SPA.

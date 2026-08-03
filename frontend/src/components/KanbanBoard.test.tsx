@@ -35,6 +35,21 @@ describe("KanbanBoard", () => {
     expect(screen.getAllByTestId(/column-/i)).toHaveLength(5);
   });
 
+  it("restores an existing session from localStorage", () => {
+    window.localStorage.setItem("pm-mvp-auth", "1");
+    render(<KanbanBoard />);
+    expect(screen.getByRole("heading", { name: /kanban studio/i })).toBeInTheDocument();
+    expect(screen.getAllByTestId(/column-/i)).toHaveLength(5);
+  });
+
+  it("returns to the login screen after logout", async () => {
+    render(<KanbanBoard />);
+    await login();
+    await userEvent.click(screen.getByRole("button", { name: /log out/i }));
+    expect(screen.getByRole("heading", { name: /sign in to kanban studio/i })).toBeInTheDocument();
+    expect(screen.queryAllByTestId(/column-/i)).toHaveLength(0);
+  });
+
   it("renames a column", async () => {
     render(<KanbanBoard />);
     await login();

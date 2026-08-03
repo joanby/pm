@@ -15,21 +15,19 @@ import {
 } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
+import {
+  isSessionActive,
+  setSessionActive,
+  validateCredentials,
+} from "@/lib/auth";
 import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
-
-const AUTH_STORAGE_KEY = "pm-mvp-auth";
-const MVP_USER = "user";
-const MVP_PASSWORD = "password";
 
 export const KanbanBoard = () => {
   const [board, setBoard] = useState<BoardData>(() => initialData);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
-    return window.localStorage.getItem(AUTH_STORAGE_KEY) === "1";
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() =>
+    isSessionActive()
+  );
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
@@ -49,8 +47,7 @@ export const KanbanBoard = () => {
   };
 
   useEffect(() => {
-    const hasSession = window.localStorage.getItem(AUTH_STORAGE_KEY) === "1";
-    setIsAuthenticated(hasSession);
+    setIsAuthenticated(isSessionActive());
   }, []);
 
   const cardsById = useMemo(() => board.cards, [board.cards]);
@@ -121,8 +118,8 @@ export const KanbanBoard = () => {
 
   const handleLogin = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (username === MVP_USER && password === MVP_PASSWORD) {
-      window.localStorage.setItem(AUTH_STORAGE_KEY, "1");
+    if (validateCredentials(username, password)) {
+      setSessionActive(true);
       setIsAuthenticated(true);
       setAuthError(null);
       setPassword("");
@@ -132,7 +129,7 @@ export const KanbanBoard = () => {
   };
 
   const handleLogout = () => {
-    window.localStorage.removeItem(AUTH_STORAGE_KEY);
+    setSessionActive(false);
     setIsAuthenticated(false);
     setUsername("");
     setPassword("");

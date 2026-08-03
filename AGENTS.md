@@ -32,9 +32,10 @@ Construir una aplicación de gestión de proyectos con tablero Kanban y chat con
 
 ## Estado actual del proyecto
 
-- Existe un MVP funcional de frontend en `frontend/`.
-- Ese frontend es actualmente una demo desacoplada de Docker/backend.
-- La integración completa se planifica en las fases definidas en `docs/PLAN.md`.
+- **Parte 2 completada:** Docker, FastAPI, scripts multiplataforma, `/api/health` y servicio de estáticos en `/`.
+- **Parte 3 completada:** frontend Next.js exportado e integrado en Docker; tablero Kanban servido por el backend.
+- **Parte 4 completada:** login simulado en cliente (`user/password`), guard de acceso y logout.
+- Las fases restantes (BD, API persistente, IA) se definen en `docs/PLAN.md`.
 
 ## Flujo funcional esperado (alto nivel)
 
@@ -75,5 +76,6 @@ La ejecución por fases (planificación, estructura, integración frontend/backe
 
 ## Documentación de referencia
 
+- Inicio rápido: `README.md`.
 - Plan principal: `docs/PLAN.md`.
 - Guías específicas por área: `backend/AGENTS.md`, `scripts/AGENTS.md` y futuras guías en subdirectorios.

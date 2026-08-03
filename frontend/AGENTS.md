@@ -2,7 +2,7 @@
 
 ## Propósito de este directorio
 
-Este frontend implementa un demo funcional de tablero Kanban en Next.js. Actualmente funciona de forma local y autónoma (sin backend real), y sirve como base para la integración progresiva definida en `docs/PLAN.md`.
+Este frontend implementa un demo funcional de tablero Kanban en Next.js. Se compila con `output: "export"` y se sirve de forma estática desde el backend FastAPI en `/` (Parte 3).
 
 ## Stack técnico
 
@@ -24,6 +24,8 @@ Este frontend implementa un demo funcional de tablero Kanban en Next.js. Actualm
   - `KanbanCard.tsx`: tarjeta individual sortable.
   - `KanbanCardPreview.tsx`: preview para `DragOverlay`.
   - `NewCardForm.tsx`: alta de nuevas tarjetas.
+- `src/lib/auth.ts`
+  - credenciales MVP, validación y sesión en `localStorage`
 - `src/lib/kanban.ts`
   - tipos (`Card`, `Column`, `BoardData`)
   - datos iniciales `initialData`
@@ -34,21 +36,21 @@ Este frontend implementa un demo funcional de tablero Kanban en Next.js. Actualm
 ## Estado funcional actual
 
 - Implementado:
-  - Visualización de tablero en `/`.
+  - Visualización de tablero en `/` (servido por backend vía Docker).
+  - Login simulado en cliente con `user/password` (`src/lib/auth.ts`).
+  - Guard de acceso: el tablero solo se muestra con sesión activa.
+  - Logout que invalida la sesión en cliente.
   - 5 columnas fijas renombrables.
   - Crear y eliminar tarjetas.
   - Mover tarjetas dentro de la misma columna y entre columnas (drag and drop).
 - No implementado todavía:
-  - Login.
   - Persistencia en backend/BD.
   - Chat lateral con IA.
   - Actualización de Kanban por IA.
 
 ## Brechas para integración (siguientes fases)
 
-- Falta infraestructura de ejecución unificada con backend en Docker.
 - Falta reemplazar `initialData` en memoria por lectura/escritura vía API.
-- Falta modelo de sesión para login simulado con `user/password`.
 - Falta endpoint backend para operaciones Kanban persistentes.
 - Falta integración de chat IA y aplicación de salidas estructuradas al tablero.
 
@@ -61,10 +63,12 @@ Este frontend implementa un demo funcional de tablero Kanban en Next.js. Actualm
 ## Pruebas disponibles
 
 - Unitarias/componentes (Vitest + Testing Library):
+  - `src/lib/auth.test.ts`
   - `src/lib/kanban.test.ts`
-  - `src/components/KanbanBoard.test.tsx`
+  - `src/components/KanbanBoard.test.tsx` (login, logout, guard de acceso)
 - Integración E2E (Playwright):
-  - `tests/kanban.spec.ts`
+  - `tests/kanban.spec.ts` (dev server en `:3000`)
+  - `npm run test:e2e:docker` (backend Docker en `:8000`, Parte 3)
 
 ## Comandos de trabajo
 
@@ -74,7 +78,8 @@ Desde `frontend/`:
 - `npm run build`: build de producción.
 - `npm run start`: ejecutar build.
 - `npm run test:unit`: pruebas unitarias.
-- `npm run test:e2e`: pruebas de integración E2E.
+- `npm run test:e2e`: pruebas E2E contra dev server (`:3000`).
+- `npm run test:e2e:docker`: pruebas E2E contra backend Docker (`:8000`).
 - `npm run test:all`: suite completa (`unit + e2e`).
 
 ## Convenciones para agentes

@@ -4,8 +4,8 @@
 
 - Credenciales oficiales del MVP: `user/password`.
 - No cerrar ninguna parte funcional sin pruebas unitarias e integración.
-- Cobertura objetivo orientativa: hasta ~80% cuando sea sensato; priorizar pruebas valiosas sobre perseguir un porcentaje.
-- No es obligatorio alcanzar 80% si el coste obliga a añadir pruebas de bajo valor.
+- Cobertura objetivo orientativa: hasta ~80% solo cuando sea sensato y sin añadir pruebas de bajo valor para alcanzarlo.
+- No es obligatorio alcanzar 80%; es preferible menos cobertura con pruebas útiles que muchas pruebas triviales.
 - Priorizar simplicidad y evitar sobreingeniería.
 - Validar siempre por evidencia observable (logs, respuestas API, comportamiento UI).
 
@@ -62,12 +62,12 @@ Disponer de una base ejecutable local con Docker, backend FastAPI y scripts mult
 - Endpoint HTML estático "hola mundo" y endpoint API de verificación.
 
 ### Lista de verificación
-- [ ] Crear Dockerfile y configuración de ejecución local.
-- [ ] Inicializar backend FastAPI mínimo.
-- [ ] Implementar endpoint `/api/health` (o equivalente).
-- [ ] Servir página estática de prueba en `/`.
-- [ ] Crear scripts `start` y `stop` por plataforma.
-- [ ] Documentar comandos básicos en `README`/`docs` si aplica.
+- [x] Crear Dockerfile y configuración de ejecución local.
+- [x] Inicializar backend FastAPI mínimo.
+- [x] Implementar endpoint `/api/health` (o equivalente).
+- [x] Servir página estática de prueba en `/`.
+- [x] Crear scripts `start` y `stop` por plataforma.
+- [x] Documentar comandos básicos en `README`/`docs` si aplica.
 
 ### Pruebas
 - **Unitarias:** pruebas de funciones utilitarias/backend base (ejemplo: config y health logic).
@@ -77,9 +77,9 @@ Disponer de una base ejecutable local con Docker, backend FastAPI y scripts mult
   - scripts de arranque/parada funcionan en cada OS objetivo.
 
 ### Criterios de éxito
-- [ ] El sistema arranca en Docker sin pasos manuales ocultos.
-- [ ] `/` y API básica responden correctamente.
-- [ ] Scripts documentados y operativos en los tres sistemas.
+- [x] El sistema arranca en Docker sin pasos manuales ocultos.
+- [x] `/` y API básica responden correctamente.
+- [x] Scripts documentados y operativos en los tres sistemas.
 
 ### Riesgos y mitigación
 - Riesgo: diferencias entre entornos de OS.
@@ -100,18 +100,18 @@ Compilar y servir el frontend desde el backend para mostrar el tablero demo en `
 - Backend sirviendo estáticos del frontend en `/`.
 
 ### Lista de verificación
-- [ ] Configurar build de frontend para despliegue estático.
-- [ ] Copiar/servir assets estáticos desde backend.
-- [ ] Verificar que `/` renderiza el tablero Kanban demo.
-- [ ] Ajustar rutas estáticas y fallback si es necesario.
+- [x] Configurar build de frontend para despliegue estático.
+- [x] Copiar/servir assets estáticos desde backend.
+- [x] Verificar que `/` renderiza el tablero Kanban demo.
+- [x] Ajustar rutas estáticas y fallback si es necesario.
 
 ### Pruebas
 - **Unitarias:** tests de utilidades/frontend existentes y nuevos ajustes de build.
 - **Integración:** contenedor levantado, navegación a `/`, carga correcta del board.
 
 ### Criterios de éxito
-- [ ] El tablero demo aparece en `/` servido por backend.
-- [ ] No hay errores de assets ni de rutas en ejecución local.
+- [x] El tablero demo aparece en `/` servido por backend.
+- [x] No hay errores de assets ni de rutas en ejecución local.
 
 ### Riesgos y mitigación
 - Riesgo: rutas/paths de assets rotos en build estático.
@@ -133,11 +133,11 @@ Requerir autenticación inicial para ver el tablero y permitir cierre de sesión
 - Flujo de logout.
 
 ### Lista de verificación
-- [ ] Definir guard de acceso al tablero.
-- [ ] Implementar login con `user/password`.
-- [ ] Implementar cierre de sesión.
-- [ ] Mostrar mensajes de error para credenciales inválidas.
-- [ ] Mantener UX simple y consistente con la UI actual.
+- [x] Definir guard de acceso al tablero.
+- [x] Implementar login con `user/password`.
+- [x] Implementar cierre de sesión.
+- [x] Mostrar mensajes de error para credenciales inválidas.
+- [x] Mantener UX simple y consistente con la UI actual.
 
 ### Pruebas
 - **Unitarias:** validación de credenciales, estado de sesión y guards.
@@ -145,12 +145,12 @@ Requerir autenticación inicial para ver el tablero y permitir cierre de sesión
   - usuario no autenticado no ve el board;
   - login válido muestra board;
   - logout devuelve a pantalla de login.
-- **Cobertura:** objetivo aproximado de 80% en el módulo de login solo si se logra con pruebas útiles.
+- **Cobertura:** no perseguir un porcentaje fijo. Añadir pruebas útiles sobre credenciales, sesión y guard; ~80% solo si se alcanza sin tests triviales.
 
 ### Criterios de éxito
-- [ ] El acceso al board queda protegido por login.
-- [ ] Solo `user/password` desbloquea sesión en MVP.
-- [ ] Logout invalida sesión en cliente.
+- [x] El acceso al board queda protegido por login.
+- [x] Solo `user/password` desbloquea sesión en MVP.
+- [x] Logout invalida sesión en cliente.
 
 ### Riesgos y mitigación
 - Riesgo: fuga de acceso sin autenticación en rutas UI.

@@ -135,6 +135,11 @@ const assistantMessages = (page: Page) =>
 // run before this call's own reply arrives. Waiting on the *count* growing
 // past its pre-send value (rather than "a reply is visible") is what
 // guarantees we waited for this send's own response.
+//
+// OpenRouter's free-tier model also occasionally 502s on a cold first
+// call (observed in practice, not a code defect — docs/api-ai.md documents
+// 502 as an expected upstream failure mode). If that happens, retry once
+// through the sidebar's own Retry action, exactly like a real user would.
 const sendChatMessageAndWaitForReply = async (page: Page, message: string) => {
   const sidebar = page.getByTestId("ai-chat-sidebar");
   const countBefore = await assistantMessages(page).count();
@@ -142,7 +147,18 @@ const sendChatMessageAndWaitForReply = async (page: Page, message: string) => {
   await sidebar.getByTestId("ai-chat-input").fill(message);
   await sidebar.getByTestId("ai-chat-send").click();
 
-  await expect(assistantMessages(page)).toHaveCount(countBefore + 1, { timeout: 60_000 });
+  try {
+    await expect(assistantMessages(page)).toHaveCount(countBefore + 1, { timeout: 45_000 });
+    return;
+  } catch (error) {
+    const errorBanner = sidebar.getByRole("alert");
+    if (!(await errorBanner.isVisible())) {
+      throw error;
+    }
+  }
+
+  await sidebar.getByRole("button", { name: /retry/i }).click();
+  await expect(assistantMessages(page)).toHaveCount(countBefore + 1, { timeout: 45_000 });
 };
 
 test("sends a chat message and displays the AI response", async ({ page }) => {

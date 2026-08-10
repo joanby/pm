@@ -284,50 +284,48 @@ class KanbanRepository:
 
         source_column_id = source["column_id"]
         source_position = source["position"]
+
+        if source_column_id == target_column_id and target_position == source_position:
+            return self.get_board(board_id)
+
         now = _now_iso()
 
-        if source_column_id == target_column_id:
-            if target_position == source_position:
-                return self.get_board(board_id)
+        # Vacate the moving card's current slot first. Otherwise the sibling
+        # shifts below can transiently collide with it under the
+        # UNIQUE(column_id, position) index (see _shift_positions for why the
+        # shifts themselves also need to avoid colliding with each other).
+        self.connection.execute(
+            "UPDATE cards SET position = -1, updated_at = ? WHERE id = ?",
+            (now, card_id),
+        )
 
+        if source_column_id == target_column_id:
             if target_position > source_position:
-                self.connection.execute(
-                    """
-                    UPDATE cards SET position = position - 1, updated_at = ?
-                    WHERE column_id = ? AND position > ? AND position <= ?
-                    """,
-                    (now, source_column_id, source_position, target_position),
+                self._shift_positions(
+                    source_column_id,
+                    -1,
+                    now,
+                    "position > ? AND position <= ?",
+                    (source_position, target_position),
                 )
             else:
-                self.connection.execute(
-                    """
-                    UPDATE cards SET position = position + 1, updated_at = ?
-                    WHERE column_id = ? AND position >= ? AND position < ?
-                    """,
-                    (now, source_column_id, target_position, source_position),
+                self._shift_positions(
+                    source_column_id,
+                    1,
+                    now,
+                    "position >= ? AND position < ?",
+                    (target_position, source_position),
                 )
             self.connection.execute(
                 "UPDATE cards SET position = ?, updated_at = ? WHERE id = ?",
                 (target_position, now, card_id),
             )
         else:
-            self.connection.execute(
-                "UPDATE cards SET position = -1, updated_at = ? WHERE id = ?",
-                (now, card_id),
+            self._shift_positions(
+                source_column_id, -1, now, "position > ?", (source_position,)
             )
-            self.connection.execute(
-                """
-                UPDATE cards SET position = position - 1, updated_at = ?
-                WHERE column_id = ? AND position > ?
-                """,
-                (now, source_column_id, source_position),
-            )
-            self.connection.execute(
-                """
-                UPDATE cards SET position = position + 1, updated_at = ?
-                WHERE column_id = ? AND position >= ?
-                """,
-                (now, target_column_id, target_position),
+            self._shift_positions(
+                target_column_id, 1, now, "position >= ?", (target_position,)
             )
             self.connection.execute(
                 """
@@ -344,3 +342,39 @@ class KanbanRepository:
         )
         self.connection.commit()
         return self.get_board(board_id)
+
+    # Positions are staged through this disjoint negative range before landing
+    # on their final value. SQLite does not guarantee the row-processing order
+    # within a single multi-row UPDATE, so shifting several sibling rows by
+    # +-1 directly (their new values landing on each other's *current*
+    # values) can trip the UNIQUE(column_id, position) index depending on
+    # that order. Staging every matched row through a value derived only from
+    # its own current position first (never colliding with an untouched
+    # sibling or with another staged row) makes the shift order-independent.
+    _POSITION_STAGING_OFFSET = 1_000_000
+
+    def _shift_positions(
+        self,
+        column_id: str,
+        delta: int,
+        now: str,
+        condition_sql: str,
+        condition_params: tuple,
+    ) -> None:
+        offset = self._POSITION_STAGING_OFFSET
+        self.connection.execute(
+            f"""
+            UPDATE cards
+            SET position = -(position + {offset}), updated_at = ?
+            WHERE column_id = ? AND {condition_sql}
+            """,
+            (now, column_id, *condition_params),
+        )
+        self.connection.execute(
+            f"""
+            UPDATE cards
+            SET position = -position - {offset} + ({delta}), updated_at = ?
+            WHERE column_id = ? AND position <= -{offset}
+            """,
+            (now, column_id),
+        )

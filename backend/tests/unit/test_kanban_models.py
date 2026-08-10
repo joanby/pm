@@ -23,6 +23,19 @@ def test_board_data_rejects_unused_cards() -> None:
         )
 
 
+def test_board_data_rejects_card_referenced_by_two_columns() -> None:
+    # A plausible malformed AI board update: the model "moves" a card by
+    # listing it under the new column without removing it from the old one.
+    with pytest.raises(ValidationError):
+        BoardData(
+            columns=[
+                Column(id="col-1", title="Backlog", cardIds=["card-1"]),
+                Column(id="col-2", title="Doing", cardIds=["card-1"]),
+            ],
+            cards={"card-1": Card(id="card-1", title="One", details="")},
+        )
+
+
 def test_board_data_accepts_valid_structure() -> None:
     board = BoardData(
         columns=[Column(id="col-1", title="Backlog", cardIds=["card-1"])],

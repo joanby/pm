@@ -10,8 +10,6 @@ from backend.app.auth import get_current_username
 from backend.app.kanban.repository import KanbanNotFoundError
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
-ping_service = AiService()
-chat_service = ChatService()
 
 
 def _handle_openrouter_error(error: Exception) -> None:
@@ -32,7 +30,7 @@ def _handle_openrouter_error(error: Exception) -> None:
 def ping_ai(username: str = Depends(get_current_username)) -> AiPingResponse:
     del username
     try:
-        return ping_service.ping()
+        return AiService().ping()
     except Exception as error:
         _handle_openrouter_error(error)
 
@@ -43,7 +41,7 @@ def chat_with_ai(
     username: str = Depends(get_current_username),
 ) -> ChatResponse:
     try:
-        return chat_service.chat(username, payload.message)
+        return ChatService().chat(username, payload.message)
     except Exception as error:
         _handle_openrouter_error(error)
 
@@ -51,6 +49,6 @@ def chat_with_ai(
 @router.get("/history")
 def get_chat_history(username: str = Depends(get_current_username)) -> ChatHistoryResponse:
     try:
-        return chat_service.get_history(username)
+        return ChatService().get_history(username)
     except Exception as error:
         _handle_openrouter_error(error)

@@ -50,6 +50,17 @@ class BoardData(BaseModel):
         if missing:
             raise ValueError(f"Missing card definitions for: {', '.join(missing)}")
 
+        seen: set[str] = set()
+        duplicated: list[str] = []
+        for card_id in referenced_ids:
+            if card_id in seen and card_id not in duplicated:
+                duplicated.append(card_id)
+            seen.add(card_id)
+        if duplicated:
+            raise ValueError(
+                f"Cards referenced by more than one column: {', '.join(duplicated)}"
+            )
+
         for card_id, card in self.cards.items():
             if card.id != card_id:
                 raise ValueError(f"Card key '{card_id}' does not match card id '{card.id}'")

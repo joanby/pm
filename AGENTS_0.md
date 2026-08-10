@@ -38,7 +38,10 @@ Construir una aplicación de gestión de proyectos con tablero Kanban y chat con
 - **Parte 5 completada:** esquema SQLite aprobado e inicialización de BD.
 - **Parte 6 completada:** API Kanban con persistencia SQLite.
 - **Parte 7 completada:** frontend sincronizado con la API Kanban.
-- Siguiente fase: Parte 8 (OpenRouter) — ver `docs/PLAN.md`.
+- **Parte 8 completada:** conectividad OpenRouter con endpoint protegido `/api/ai/ping`.
+- **Parte 9 completada:** chat IA con salidas estructuradas y persistencia de historial.
+- **Parte 10 completada:** widget lateral de chat IA integrado en el tablero.
+- MVP Partes 2-10 completadas — ver `docs/PLAN.md`.
 
 ## Flujo funcional esperado (alto nivel)
 

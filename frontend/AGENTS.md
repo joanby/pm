@@ -24,10 +24,13 @@ Este frontend implementa un demo funcional de tablero Kanban en Next.js. Se comp
   - `KanbanCard.tsx`: tarjeta individual sortable.
   - `KanbanCardPreview.tsx`: preview para `DragOverlay`.
   - `NewCardForm.tsx`: alta de nuevas tarjetas.
+  - `AiChatSidebar.tsx`: chat lateral con IA (Parte 10).
 - `src/lib/auth.ts`
   - credenciales MVP, validación y sesión en `localStorage`
 - `src/lib/kanban-api.ts`
   - cliente fetch para la API Kanban (`X-MVP-Username`)
+- `src/lib/ai-api.ts`
+  - cliente fetch para chat IA (`/api/ai/chat`, `/api/ai/history`)
 - `src/lib/kanban.ts`
   - tipos (`Card`, `Column`, `BoardData`)
   - datos iniciales `initialData`
@@ -46,14 +49,8 @@ Este frontend implementa un demo funcional de tablero Kanban en Next.js. Se comp
   - 5 columnas fijas renombrables.
   - Crear y eliminar tarjetas.
   - Mover tarjetas dentro de la misma columna y entre columnas (drag and drop).
-- No implementado todavía:
-  - Persistencia en backend/BD.
-  - Chat lateral con IA.
-  - Actualización de Kanban por IA.
-
-## Brechas para integración (siguientes fases)
-
-- Falta integración de chat IA y aplicación de salidas estructuradas al tablero.
+  - Chat lateral con IA (`AiChatSidebar`) con historial, envío y estados de carga/error.
+  - Actualización automática del tablero tras respuestas IA con cambios Kanban.
 
 ## Estado de datos y persistencia
 
@@ -66,7 +63,9 @@ Este frontend implementa un demo funcional de tablero Kanban en Next.js. Se comp
 - Unitarias/componentes (Vitest + Testing Library):
   - `src/lib/auth.test.ts`
   - `src/lib/kanban.test.ts`
-  - `src/components/KanbanBoard.test.tsx` (login, logout, guard de acceso)
+  - `src/lib/ai-api.test.ts`
+  - `src/components/KanbanBoard.test.tsx`
+  - `src/components/AiChatSidebar.test.tsx`
 - Integración E2E (Playwright):
   - `tests/kanban.spec.ts` (dev server en `:3000`)
   - `npm run test:e2e:docker` (backend Docker en `:8000`, Parte 3)

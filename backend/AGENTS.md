@@ -15,6 +15,11 @@ Este backend implementa la base de la API del proyecto con FastAPI y sirve el fr
 - `app/kanban/`
   - `models.py`, `repository.py`, `service.py`, `router.py`, `seed.py`
   - API Kanban en `/api/board` (Parte 6)
+- `app/ai/`
+  - `config.py`, `client.py`, `service.py`, `chat_service.py`, `router.py`
+  - `chat_repository.py`, `prompts.py`, `structured.py`
+  - Conectividad OpenRouter en `GET /api/ai/ping` (Parte 8)
+  - Chat estructurado en `POST /api/ai/chat` (Parte 9)
 - `static/frontend/`
   - salida estática de `frontend` generada por `next build` con `output: "export"`.
 - `requirements.txt`
@@ -35,8 +40,7 @@ Este backend implementa la base de la API del proyecto con FastAPI y sirve el fr
 
 ## Próximos pasos (según plan)
 
-- Conectar frontend a la API Kanban (Parte 7).
-- Partes 8-10: IA.
+- MVP Partes 2-10 completadas.
 
 ## Pruebas de integración estática (Parte 3)
 
@@ -50,3 +54,7 @@ Este backend implementa la base de la API del proyecto con FastAPI y sirve el fr
 - `tests/unit/test_kanban_models.py`: validación de payloads del tablero.
 - `tests/unit/test_kanban_repository.py`: persistencia en repositorio.
 - `tests/integration/test_kanban_api.py`: flujo API Kanban completo.
+- `tests/unit/test_ai_client.py`, `tests/unit/test_ai_config.py`: cliente OpenRouter.
+- `tests/integration/test_ai_openrouter.py`: llamada real a OpenRouter vía `/api/ai/ping`.
+- `tests/unit/test_ai_structured.py`, `tests/unit/test_ai_chat_service.py`: parser y aplicación de cambios.
+- `tests/integration/test_ai_chat.py`: chat real con respuesta textual y cambios Kanban.

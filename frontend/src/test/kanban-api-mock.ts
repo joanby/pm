@@ -48,6 +48,18 @@ export const mockKanbanApi = () => {
         return new Response(null, { status: 204 });
       }
 
+      if (url === "/api/ai/history" && method === "GET") {
+        return jsonResponse({ messages: [] });
+      }
+
+      if (url === "/api/ai/chat" && method === "POST") {
+        return jsonResponse({
+          message: "This is a mocked AI response.",
+          boardUpdated: false,
+          board: initialData,
+        });
+      }
+
       return jsonResponse({ detail: "Not found" }, 404);
     })
   );

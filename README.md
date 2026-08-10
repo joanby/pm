@@ -106,6 +106,29 @@ curl -H "X-MVP-Username: user" http://localhost:8000/api/board
 
 Ver [docs/api-kanban.md](docs/api-kanban.md) para el contrato completo.
 
+### Conectividad IA (Parte 8)
+
+Requiere `OPENROUTER_API_KEY` en `.env` (raíz). El modelo por defecto es `openai/gpt-oss-120b:free`; si OpenRouter indica que la variante free no está disponible, define `OPENROUTER_MODEL=openai/gpt-oss-120b` en `.env`.
+
+Con el contenedor en marcha:
+
+```bash
+curl -H "X-MVP-Username: user" http://localhost:8000/api/ai/ping
+```
+
+Respuesta esperada (`200`): JSON con `model`, `prompt` y `response` del modelo.
+
+### Chat IA (Parte 9)
+
+```bash
+curl -X POST http://localhost:8000/api/ai/chat ^
+  -H "Content-Type: application/json" ^
+  -H "X-MVP-Username: user" ^
+  -d "{\"message\":\"How many columns are on my board?\"}"
+```
+
+Ver [docs/api-ai.md](docs/api-ai.md) para el contrato completo.
+
 ## Estructura del proyecto
 
 ```
@@ -136,5 +159,8 @@ pm/
 - **Parte 5 completada:** esquema SQLite aprobado; BD inicializable vía `init_database()`.
 - **Parte 6 completada:** API Kanban con persistencia SQLite (`/api/board`, columnas y tarjetas).
 - **Parte 7 completada:** frontend conectado a la API; cambios persisten tras recarga.
-- Documentación BD: [docs/db-design.md](docs/db-design.md) · API: [docs/api-kanban.md](docs/api-kanban.md)
-- Siguiente fase: Parte 8 (OpenRouter) — ver [docs/PLAN.md](docs/PLAN.md).
+- **Parte 8 completada:** conectividad OpenRouter con endpoint protegido `/api/ai/ping`.
+- **Parte 9 completada:** chat IA con salidas estructuradas (`POST /api/ai/chat`).
+- **Parte 10 completada:** widget lateral de chat IA en el frontend.
+- Documentación BD: [docs/db-design.md](docs/db-design.md) · API Kanban: [docs/api-kanban.md](docs/api-kanban.md) · API IA: [docs/api-ai.md](docs/api-ai.md)
+- MVP Partes 2-10 completadas — ver [docs/PLAN.md](docs/PLAN.md).

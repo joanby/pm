@@ -109,3 +109,90 @@ test("persists a card after reload", async ({ page }) => {
   await expect(page.locator('[data-testid^="column-"]')).toHaveCount(5);
   await expect(page.getByText("Persisted card")).toBeVisible();
 });
+
+// --- AI chat sidebar (Parte 10) -------------------------------------------
+//
+// Exercises `AiChatSidebar.tsx` / `src/lib/ai-api.ts` against the real
+// backend contract (`docs/api-ai.md`). Testids used below:
+//   - data-testid="ai-chat-sidebar"   sidebar container
+//   - data-testid="ai-chat-input"     message textarea/input
+//   - data-testid="ai-chat-send"      send button
+//   - data-testid="ai-chat-message"   one element per chat bubble, with
+//                                     data-role="user" | "assistant"
+//   - data-testid="ai-chat-loading"   visible while waiting for a reply
+//
+// They call the real OpenRouter API (like
+// backend/tests/integration/test_ai_chat.py) and need OPENROUTER_API_KEY
+// configured in the running container's .env.
+
+const assistantMessages = (page: Page) =>
+  page
+    .getByTestId("ai-chat-sidebar")
+    .locator('[data-testid="ai-chat-message"][data-role="assistant"]');
+
+// Chat history persists across test runs (it isn't reset like the board),
+// so a matching assistant bubble can already be on screen from a previous
+// run before this call's own reply arrives. Waiting on the *count* growing
+// past its pre-send value (rather than "a reply is visible") is what
+// guarantees we waited for this send's own response.
+const sendChatMessageAndWaitForReply = async (page: Page, message: string) => {
+  const sidebar = page.getByTestId("ai-chat-sidebar");
+  const countBefore = await assistantMessages(page).count();
+
+  await sidebar.getByTestId("ai-chat-input").fill(message);
+  await sidebar.getByTestId("ai-chat-send").click();
+
+  await expect(assistantMessages(page)).toHaveCount(countBefore + 1, { timeout: 60_000 });
+};
+
+test("sends a chat message and displays the AI response", async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.goto("/");
+  await login(page);
+
+  const sidebar = page.getByTestId("ai-chat-sidebar");
+  await expect(sidebar).toBeVisible();
+
+  await sendChatMessageAndWaitForReply(
+    page,
+    "How many columns are on my board? Reply briefly."
+  );
+
+  await expect(sidebar.getByTestId("ai-chat-loading")).toBeHidden();
+
+  // Text-only response: the board stays untouched.
+  await expect(page.locator('[data-testid^="column-"]')).toHaveCount(5);
+});
+
+test("applies a Kanban board update returned by the AI", async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.goto("/");
+  await login(page);
+
+  const cardTitle = "AI E2E Test Card";
+  await sendChatMessageAndWaitForReply(
+    page,
+    `Add a new card titled '${cardTitle}' to the Backlog column with details ` +
+      "'Created by Parte 10 E2E test'. Return the full updated board in the board field."
+  );
+
+  // The board updates automatically in the UI, without a manual reload.
+  const backlogColumn = page.getByTestId("column-col-backlog");
+  await expect(backlogColumn.getByText(cardTitle)).toBeVisible({ timeout: 10_000 });
+});
+
+test("persists chat history after reload", async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.goto("/");
+  await login(page);
+
+  const question = `Say hello in one short sentence. (e2e-${Date.now()})`;
+  await sendChatMessageAndWaitForReply(page, question);
+
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Kanban Studio" })).toBeVisible();
+
+  const sidebar = page.getByTestId("ai-chat-sidebar");
+  await expect(sidebar.getByText(question)).toBeVisible();
+  await expect(assistantMessages(page).last()).toBeVisible();
+});

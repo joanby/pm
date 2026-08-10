@@ -22,13 +22,13 @@
 | 5 | Modelado de base de datos | Completada (aprobada) |
 | 6 | Backend Kanban | Completada |
 | 7 | Frontend + Backend persistente | Completada |
-| 8 | Conectividad IA (OpenRouter) | Pendiente |
-| 9 | IA con salidas estructuradas | Pendiente |
-| 10 | Widget lateral de chat IA | Pendiente |
+| 8 | Conectividad IA (OpenRouter) | Completada |
+| 9 | IA con salidas estructuradas | Completada |
+| 10 | Widget lateral de chat IA | Completada |
 
-**Verificación reciente (local):** 23 tests backend (pytest), 15 tests unitarios frontend (Vitest), 6/6 E2E Docker (`npm run test:e2e:docker` contra `http://localhost:8000`).
+**Verificación reciente (local):** 44 tests backend (pytest), 20 tests unitarios frontend (Vitest), 9/9 E2E Docker (`npm run test:e2e:docker` contra `http://localhost:8000`).
 
-**Siguiente paso planificado:** Parte 8 (conectividad OpenRouter).
+**Estado:** MVP Partes 2-10 completadas.
 
 ---
 
@@ -388,18 +388,18 @@ Verificar comunicación backend con OpenRouter.
 - Endpoint de prueba de conectividad IA.
 
 ### Lista de verificación
-- [ ] Leer `OPENROUTER_API_KEY` desde `.env`.
-- [ ] Configurar llamada con modelo `openai/gpt-oss-120b:free`.
-- [ ] Implementar prueba funcional simple ("2+2").
-- [ ] Manejar errores y timeouts básicos.
+- [x] Leer `OPENROUTER_API_KEY` desde `.env`.
+- [x] Configurar llamada con modelo `openai/gpt-oss-120b:free` (override opcional vía `OPENROUTER_MODEL`).
+- [x] Implementar prueba funcional simple ("2+2").
+- [x] Manejar errores y timeouts básicos.
 
 ### Pruebas
 - **Unitarias:** construcción de requests y parse de respuesta.
 - **Integración:** llamada real a OpenRouter en entorno local configurado.
 
 ### Criterios de éxito
-- [ ] El backend obtiene respuesta válida de IA.
-- [ ] Fallos de red/API quedan reportados con errores claros.
+- [x] El backend obtiene respuesta válida de IA.
+- [x] Fallos de red/API quedan reportados con errores claros.
 
 ### Riesgos y mitigación
 - Riesgo: latencia/fallos externos de OpenRouter.
@@ -421,11 +421,11 @@ Enviar contexto completo de Kanban + conversación y recibir respuesta estructur
 - Persistencia de historial de conversación según alcance MVP.
 
 ### Lista de verificación
-- [ ] Definir schema de respuesta IA (mensaje + cambios opcionales).
-- [ ] Enviar a IA: board JSON + prompt usuario + historial.
-- [ ] Validar respuesta estructurada.
-- [ ] Aplicar cambios al tablero cuando existan.
-- [ ] Devolver al frontend respuesta y estado actualizado.
+- [x] Definir schema de respuesta IA (mensaje + cambios opcionales).
+- [x] Enviar a IA: board JSON + prompt usuario + historial.
+- [x] Validar respuesta estructurada.
+- [x] Aplicar cambios al tablero cuando existan.
+- [x] Devolver al frontend respuesta y estado actualizado.
 
 ### Pruebas
 - **Unitarias:** validación/parsing de salida estructurada y aplicación de cambios.
@@ -434,9 +434,9 @@ Enviar contexto completo de Kanban + conversación y recibir respuesta estructur
   - respuesta con cambios de Kanban válidos.
 
 ### Criterios de éxito
-- [ ] El backend procesa respuestas estructuradas de forma fiable.
-- [ ] Los cambios IA válidos se reflejan y persisten en tablero.
-- [ ] Respuestas inválidas no rompen la aplicación.
+- [x] El backend procesa respuestas estructuradas de forma fiable.
+- [x] Los cambios IA válidos se reflejan y persisten en tablero.
+- [x] Respuestas inválidas no rompen la aplicación.
 
 ### Riesgos y mitigación
 - Riesgo: respuesta IA malformada o inconsistente.
@@ -458,11 +458,11 @@ Incorporar chat lateral completo en la UI con actualización automática del Kan
 - Actualización reactiva del tablero tras respuesta IA.
 
 ### Lista de verificación
-- [ ] Diseñar e implementar widget lateral con historial.
-- [ ] Añadir input, envío y estados de carga/error.
-- [ ] Consumir endpoint backend de chat.
-- [ ] Aplicar en UI los cambios Kanban devueltos por IA.
-- [ ] Mantener coherencia visual con paleta del proyecto.
+- [x] Diseñar e implementar widget lateral con historial.
+- [x] Añadir input, envío y estados de carga/error.
+- [x] Consumir endpoint backend de chat.
+- [x] Aplicar en UI los cambios Kanban devueltos por IA.
+- [x] Mantener coherencia visual con paleta del proyecto.
 
 ### Pruebas
 - **Unitarias:** componentes de chat, manejo de estado y adaptadores de respuesta.
@@ -473,9 +473,9 @@ Incorporar chat lateral completo en la UI con actualización automática del Kan
   - si hay cambios Kanban, board se actualiza automáticamente.
 
 ### Criterios de éxito
-- [ ] Chat lateral usable y estable.
-- [ ] Respuesta IA visible en tiempo razonable.
-- [ ] Actualizaciones Kanban vía IA aplicadas sin recargar manualmente.
+- [x] Chat lateral usable y estable.
+- [x] Respuesta IA visible en tiempo razonable.
+- [x] Actualizaciones Kanban vía IA aplicadas sin recargar manualmente.
 
 ### Riesgos y mitigación
 - Riesgo: desincronización entre chat, board y estado persistido.

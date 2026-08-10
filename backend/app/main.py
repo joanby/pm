@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
+from backend.app.ai.router import router as ai_router
 from backend.app.db.init_db import init_database
 from backend.app.kanban.router import router as kanban_router
 from backend.app.kanban.seed import seed_demo_data
@@ -28,6 +29,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Project Management MVP API", lifespan=lifespan)
 app.include_router(kanban_router)
+app.include_router(ai_router)
 
 
 @app.get("/api/health")

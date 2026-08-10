@@ -6,6 +6,9 @@ export default defineConfig({
   testDir: "./tests",
   globalSetup: "./tests/docker-global-setup.ts",
   timeout: 60_000,
+  fullyParallel: false,
+  workers: 1,
+  retries: 0,
   expect: {
     timeout: 10_000,
   },

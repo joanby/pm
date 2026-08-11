@@ -90,3 +90,5 @@ Every new feature is expected to ship with both a unit/component test and an int
 - Prefer small, verifiable changes with root-cause diagnosis over quick patches.
 - UI color scheme: accent yellow `#ecad0a`, primary blue `#209dd7`, secondary purple `#753991`, dark navy `#032147`, auxiliary text gray `#888888`.
 - Area-specific guidance lives in `AGENTS.md`, `backend/AGENTS.md`, `frontend/AGENTS.md`, `scripts/AGENTS.md` — check the relevant one before making changes in that area.
+## plan detallado
+@docs/plan.md

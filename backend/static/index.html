@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PM MVP - Hello World</title>
+    <style>
+      :root {
+        --accent-yellow: #ecad0a;
+        --primary-blue: #209dd7;
+        --secondary-purple: #753991;
+        --navy-dark: #032147;
+        --gray-text: #888888;
+      }
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #f6f8fb;
+        color: var(--navy-dark);
+      }
+      main {
+        max-width: 720px;
+        margin: 72px auto;
+        background: #fff;
+        border: 1px solid #e6e9ef;
+        border-radius: 16px;
+        padding: 24px;
+      }
+      h1 {
+        margin-top: 0;
+      }
+      .status {
+        margin-top: 20px;
+        padding: 12px;
+        border-radius: 10px;
+        background: #f1f8ff;
+        border: 1px solid #d8ecfb;
+      }
+      .label {
+        color: var(--gray-text);
+        font-size: 14px;
+      }
+      code {
+        color: var(--secondary-purple);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Hello World from FastAPI</h1>
+      <p class="label">
+        This static page is served at <code>/</code> by the backend.
+      </p>
+      <div class="status" id="status">Checking API health...</div>
+    </main>
+
+    <script>
+      async function loadHealth() {
+        const el = document.getElementById("status");
+        try {
+          const response = await fetch("/api/health");
+          const data = await response.json();
+          el.textContent = "API /api/health response: " + JSON.stringify(data);
+        } catch (error) {
+          el.textContent = "API call failed: " + error;
+        }
+      }
+
+      loadHealth();
+    </script>
+  </body>
+</html>

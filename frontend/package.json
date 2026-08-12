@@ -11,6 +11,7 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:docker": "playwright test --config=playwright.docker.config.ts",
     "test:all": "npm run test:unit && npm run test:e2e"
   },
   "dependencies": {

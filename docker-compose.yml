@@ -1,0 +1,15 @@
+services:
+  pm-app:
+    container_name: pm-mvp-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - pm-data:/app/backend/data
+
+volumes:
+  pm-data:

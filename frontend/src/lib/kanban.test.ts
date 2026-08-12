@@ -1,4 +1,5 @@
-import { moveCard, type Column } from "@/lib/kanban";
+import { describe, expect, it } from "vitest";
+import { getCardPlacement, initialData, moveCard, type Column } from "@/lib/kanban";
 
 describe("moveCard", () => {
   const baseColumns: Column[] = [
@@ -21,5 +22,18 @@ describe("moveCard", () => {
     const result = moveCard(baseColumns, "card-1", "col-b");
     expect(result[0].cardIds).toEqual(["card-2"]);
     expect(result[1].cardIds).toEqual(["card-3", "card-1"]);
+  });
+});
+
+describe("getCardPlacement", () => {
+  it("returns the column and position for a card", () => {
+    expect(getCardPlacement(initialData.columns, "card-1")).toEqual({
+      columnId: "col-backlog",
+      position: 0,
+    });
+  });
+
+  it("returns null when the card is missing", () => {
+    expect(getCardPlacement(initialData.columns, "missing")).toBeNull();
   });
 });

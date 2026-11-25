@@ -1,5 +1,5 @@
 import os
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 
@@ -19,7 +19,7 @@ def get_openrouter_api_key() -> str:
     return api_key
 
 
-def call_openrouter_messages(messages: list[dict[str, str]], response_format: Optional[dict[str, Any]] = None) -> str:
+def call_openrouter_messages(messages: list[dict[str, str]], response_format: dict[str, Any] | None = None) -> str:
     payload: dict[str, Any] = {
         "model": OPENROUTER_MODEL,
         "messages": messages,
@@ -56,6 +56,4 @@ def call_openrouter_messages(messages: list[dict[str, str]], response_format: Op
 
 
 def call_openrouter(prompt: str) -> str:
-    return call_openrouter_messages(
-        [{"role": "user", "content": prompt}],
-    )
+    return call_openrouter_messages([{"role": "user", "content": prompt}])

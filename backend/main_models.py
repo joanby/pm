@@ -71,3 +71,14 @@ class UserUpdateRequest(BaseModel):
     display_name: str | None = None
     password: str | None = None
     role: Literal["admin", "member"] | None = None
+
+
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+    display_name: str
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str

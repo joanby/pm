@@ -1,3 +1,4 @@
+import { authedFetch } from "@/lib/api";
 import { type BoardData } from "@/lib/kanban";
 
 export type BoardSummary = {
@@ -11,16 +12,6 @@ export type BoardDetail = BoardData & {
   name: string;
   updated_at: string;
 };
-
-const authedFetch = (token: string, path: string, init: RequestInit = {}) =>
-  fetch(path, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...init.headers,
-    },
-  });
 
 export const listBoards = async (token: string): Promise<BoardSummary[]> => {
   const response = await authedFetch(token, "/api/boards");

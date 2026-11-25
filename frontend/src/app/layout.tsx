@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Manrope, Space_Grotesk } from "next/font/google";
+import { JetBrains_Mono, Manrope, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
 const displayFont = Space_Grotesk({
@@ -12,9 +12,14 @@ const bodyFont = Manrope({
   subsets: ["latin"],
 });
 
+const monoFont = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
-  title: "Kanban Studio",
-  description: "Un espacio de trabajo Kanban de un solo tablero, enfocado en lo esencial.",
+  title: "Kanban Studio · Frogames",
+  description: "Herramienta de gestión de proyectos para alumnos de Frogames.",
 };
 
 export default function RootLayout({
@@ -24,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${displayFont.variable} ${bodyFont.variable}`}>
+      <body className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable}`}>
         {children}
       </body>
     </html>

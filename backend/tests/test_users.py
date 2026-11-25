@@ -67,6 +67,34 @@ def test_user_can_update_own_display_name(client, member_headers) -> None:
     assert response.json()["display_name"] == "Nuevo Nombre"
 
 
+def test_user_can_change_own_password(client, member_headers) -> None:
+    response = client.post(
+        "/api/users/me/password",
+        json={"current_password": "clave-segura", "new_password": "clave-nueva-segura"},
+        headers=member_headers,
+    )
+    assert response.status_code == 200
+
+    relogin = client.post(
+        "/api/auth/login", json={"username": "miembro", "password": "clave-nueva-segura"}
+    )
+    assert relogin.status_code == 200
+
+
+def test_change_password_rejects_wrong_current_password(client, member_headers) -> None:
+    response = client.post(
+        "/api/users/me/password",
+        json={"current_password": "no-es-la-clave", "new_password": "clave-nueva-segura"},
+        headers=member_headers,
+    )
+    assert response.status_code == 401
+
+    still_old_password = client.post(
+        "/api/auth/login", json={"username": "miembro", "password": "clave-segura"}
+    )
+    assert still_old_password.status_code == 200
+
+
 def test_member_cannot_escalate_own_role(client, member_headers) -> None:
     # UserUpdateRequest used by /me intentionally has no role field exposed via this route,
     # so attempting to send one is simply ignored rather than rejected.

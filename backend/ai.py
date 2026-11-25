@@ -1,5 +1,5 @@
 import json
-from typing import Any, Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -21,7 +21,7 @@ class AiChatRequest(BaseModel):
 
 class AiChatResponse(BaseModel):
     message: str
-    boardUpdate: Optional[BoardData] = None
+    boardUpdate: BoardData | None = None
 
 
 AI_RESPONSE_SCHEMA = {

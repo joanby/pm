@@ -5,8 +5,8 @@ Backend Python FastAPI para la app de gestión de proyectos, organizado como paq
 - `main.py` solo ensambla la app: lifespan (`init_db`), registra los routers de `routers/` y monta el frontend estático. No contiene lógica de negocio ni endpoints directamente.
 - `routers/` — un router FastAPI por dominio, cada uno con sus propios modelos Pydantic si los necesita:
   - `health.py` — `/api/health`, `/api/ping`.
-  - `auth.py` — `/api/auth/login`, `/api/auth/logout`; define `sessions` (dict token→user_id), y las dependencias `require_auth` (devuelve el usuario completo) y `require_admin` (exige rol `admin`) que usan el resto de routers vía `Depends`.
-  - `users.py` — `/api/users` (gestión de usuarios, solo admin), `/api/users/me` (perfil propio, cualquier usuario autenticado). Un admin no puede eliminarse a sí mismo ni degradar al último admin a `member`.
+  - `auth.py` — `/api/auth/login`, `/api/auth/register` (alta pública, rol `member`, inicia sesión automáticamente), `/api/auth/logout`; define `sessions` (dict token→user_id), y las dependencias `require_auth` (devuelve el usuario completo) y `require_admin` (exige rol `admin`) que usan el resto de routers vía `Depends`.
+  - `users.py` — `/api/users` (gestión de usuarios, solo admin), `/api/users/me` (perfil propio: solo `display_name`), `/api/users/me/password` (cambio de contraseña propio, exige `current_password` correcto). Un admin no puede eliminarse a sí mismo ni degradar al último admin a `member`.
   - `boards.py` — `/api/boards` (listar/crear) y `/api/boards/{id}` (leer/actualizar/renombrar/eliminar). Cada usuario solo ve y modifica sus propios tableros (filtrado por `user_id` en cada consulta).
   - `ai.py` — `/api/ai/validate`, `/api/ai/chat` (rutas HTTP; la lógica de negocio con OpenRouter vive en el `ai.py` de nivel superior, ver abajo). El chat recibe `board_id` y verifica que el tablero pertenezca al usuario antes de guardar cambios.
 - `db/` — paquete de persistencia SQLite, dividido por responsabilidad:
@@ -15,7 +15,7 @@ Backend Python FastAPI para la app de gestión de proyectos, organizado como paq
   - `boards.py` — CRUD multi-tablero: `list_boards_for_user`, `get_board`, `create_board`, `update_board_data`, `rename_board`, `delete_board`. Todas las consultas exigen `user_id` para aislar tableros entre usuarios.
   - `users.py` — `hash_password`/`verify_password` (bcrypt), `find_user`, `find_user_by_id`, `list_users`, `create_user`, `update_user`, `delete_user`, `count_admins`.
   - `db/__init__.py` re-exporta la API pública para que el resto del código siga haciendo `from backend.db import ...`.
-- `main_models.py` define los modelos Pydantic compartidos: tablero (`BoardData`, `ColumnData`, `CardData`, `BoardSummary`, `BoardDetail`, `BoardCreateRequest`, `BoardRenameRequest`) y usuarios (`UserPublic`, `UserCreateRequest`, `UserUpdateRequest`).
+- `main_models.py` define los modelos Pydantic compartidos: tablero (`BoardData`, `ColumnData`, `CardData`, `BoardSummary`, `BoardDetail`, `BoardCreateRequest`, `BoardRenameRequest`) y usuarios (`UserPublic`, `UserCreateRequest`, `UserUpdateRequest`, `RegisterRequest`, `ChangePasswordRequest`).
 - `openrouter.py` contiene el cliente HTTP directo de OpenRouter (sin lógica de dominio).
 - `ai.py` (nivel superior, junto a `main.py`) construye los mensajes para OpenRouter, define el esquema estructurado, valida `message`/`boardUpdate` y reintenta hasta 3 veces si la respuesta no es JSON válido (`request_structured_ai_response`). `AiChatRequest` incluye `board_id` para saber sobre qué tablero aplicar la actualización.
 - `OPENROUTER_API_KEY` se lee desde el entorno. En Docker, `scripts/start.sh` pasa `.env` si existe.

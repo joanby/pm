@@ -27,6 +27,24 @@ export const useAuth = () => {
     setIsLoading(false);
   }, []);
 
+  const applySession = (data: {
+    id: string;
+    username: string;
+    display_name: string | null;
+    role: "admin" | "member";
+    token: string;
+  }) => {
+    const authSession: AuthSession = {
+      id: data.id,
+      username: data.username,
+      displayName: data.display_name,
+      role: data.role,
+      token: data.token,
+    };
+    setSession(authSession);
+    localStorage.setItem("auth_session", JSON.stringify(authSession));
+  };
+
   const login = useCallback(
     async (username: string, password: string) => {
       setIsLoading(true);
@@ -43,18 +61,36 @@ export const useAuth = () => {
           throw new Error("Credenciales incorrectas");
         }
 
-        const data = await response.json();
-        const authSession: AuthSession = {
-          id: data.id,
-          username: data.username,
-          displayName: data.display_name,
-          role: data.role,
-          token: data.token,
-        };
-        setSession(authSession);
-        localStorage.setItem("auth_session", JSON.stringify(authSession));
+        applySession(await response.json());
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error de autenticación");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  const register = useCallback(
+    async (username: string, password: string, displayName: string) => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password, display_name: displayName }),
+        });
+
+        if (!response.ok) {
+          const body = await response.json().catch(() => null);
+          throw new Error(body?.detail ?? "No se pudo crear la cuenta");
+        }
+
+        applySession(await response.json());
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error al registrarse");
       } finally {
         setIsLoading(false);
       }
@@ -78,5 +114,5 @@ export const useAuth = () => {
     }
   }, [session]);
 
-  return { session, isLoading, error, login, logout };
+  return { session, isLoading, error, login, register, logout };
 };

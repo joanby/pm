@@ -128,11 +128,31 @@ Crear un MVP funcional de gestión de proyectos con:
 - [x] Frontend: 12 tests unitarios/integración (Vitest) + 7 tests E2E (Playwright, contra el contenedor Docker real): login/logout, interacción de tablero, multi-tablero, gestión de usuarios, chat IA con OpenRouter real
 - [x] Corregido `.dockerignore`: no excluía `backend/kanban.db`/`backend/test-kanban.db`, por lo que la base de datos de desarrollo local se horneaba dentro de la imagen Docker en vez de crearse limpia en cada arranque
 
+## Parte 12: Autorregistro y cambio de contraseña
+
+- [x] `POST /api/auth/register` (público, sin autenticación): crea un usuario con rol `member` e inicia sesión automáticamente, igual que el login
+- [x] `POST /api/users/me/password`: cambio de contraseña propio, exige `current_password` correcto antes de aplicar `new_password`
+  - `PATCH /api/users/me` ya no acepta `password` (se separó del cambio de contraseña para poder exigir la contraseña actual)
+- [x] Frontend: `LoginForm` alterna entre modo "Iniciar sesión" y "Crear cuenta" (campo de nombre visible adicional en registro)
+- [x] Eliminada la pista "Prueba con: usuario / contraseña" del login, que revelaba las credenciales del admin semilla
+- [x] Nuevo `ChangePasswordPanel` (modal) accesible desde un botón "Cambiar contraseña" junto a "Cerrar sesión"
+- [x] Backend: 46 tests, 97% de cobertura
+- [x] Frontend: 17 tests Vitest + 9 tests E2E Playwright (incluye registro desde el login y cambio de contraseña con relogin), todos verificados contra el contenedor Docker real
+
+## Parte 13: Rediseño visual (enterprise + edgy)
+
+- [x] Tema oscuro por defecto: fondo casi negro con rejilla sutil, paneles de cristal (`var(--panel)`) con `backdrop-filter: blur`, bordes y sombras con resplandor (`--glow-yellow`, `--glow-blue`, `--glow-purple`) usando la paleta de marca existente
+- [x] Tipografía añadida: `JetBrains Mono` (`--font-mono`) para etiquetas técnicas, contadores y prompts, junto a `Space Grotesk` (display) y `Manrope` (cuerpo) ya existentes
+- [x] `LoginForm`: tarjeta de cristal sobre fondo con halos de color, marca "Frogames Labs"
+- [x] `KanbanBoard`: cabecera de cristal, columnas con franja superior de color cíclico (amarillo/azul/púrpura) en vez de un único punto amarillo
+- [x] `KanbanCard`, `NewCardForm`, `AiChatPanel`, `BoardSwitcher`, `UserManagementPanel`, `ChangePasswordPanel`: adaptados al tema oscuro manteniendo los mismos componentes y lógica
+- [x] Verificado: 17 tests Vitest + 9 tests E2E Playwright siguen en verde contra el contenedor Docker real; build y lint limpios; revisión visual manual con capturas de pantalla
+
 ## Aseguramiento de calidad
 
-- Backend: 41 tests con pytest, 97% de cobertura de líneas
-- Frontend: 12 tests con Vitest (unitarios + integración) y 7 tests E2E con Playwright contra el backend real en Docker
+- Backend: 46 tests con pytest, 97% de cobertura de líneas
+- Frontend: 17 tests con Vitest (unitarios + integración) y 9 tests E2E con Playwright contra el backend real en Docker
   - `ai-chat.spec.ts` puede fallar de forma intermitente por la latencia del modelo gratuito de OpenRouter; no indica una regresión
-- Pruebas de integración para los flujos críticos: login, multi-tablero, gestión de usuarios, IA
+- Pruebas de integración para los flujos críticos: login, registro, cambio de contraseña, multi-tablero, gestión de usuarios, IA
 - Mantenimiento de la regla de no emojis en documentación y código
 - Mantener el desarrollo simple y directo, evitando sobreingeniería

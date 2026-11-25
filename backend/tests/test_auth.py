@@ -35,3 +35,38 @@ def test_logout_invalidates_session(client, auth_headers) -> None:
 
     follow_up = client.get("/api/boards", headers=auth_headers)
     assert follow_up.status_code == 401
+
+
+def test_register_creates_member_and_auto_logs_in(client) -> None:
+    response = client.post(
+        "/api/auth/register",
+        json={"username": "recien_llegado", "password": "clave-segura", "display_name": "Recién Llegado"},
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["username"] == "recien_llegado"
+    assert body["role"] == "member"
+    assert body["token"]
+
+    boards_response = client.get(
+        "/api/boards", headers={"Authorization": f"Bearer {body['token']}"}
+    )
+    assert boards_response.status_code == 200
+
+
+def test_register_rejects_duplicate_username(client) -> None:
+    payload = {"username": "duplicado_reg", "password": "clave-segura", "display_name": "Uno"}
+    first = client.post("/api/auth/register", json=payload)
+    assert first.status_code == 201
+    second = client.post("/api/auth/register", json=payload)
+    assert second.status_code == 409
+
+
+def test_registered_user_cannot_manage_users(client) -> None:
+    register_response = client.post(
+        "/api/auth/register",
+        json={"username": "miembro_reg", "password": "clave-segura", "display_name": "Miembro"},
+    )
+    token = register_response.json()["token"]
+    response = client.get("/api/users", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 403

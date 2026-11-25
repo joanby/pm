@@ -10,8 +10,9 @@ from backend.db import (
     get_db_path,
     list_users,
     update_user,
+    verify_password,
 )
-from backend.main_models import UserCreateRequest, UserPublic, UserUpdateRequest
+from backend.main_models import ChangePasswordRequest, UserCreateRequest, UserPublic, UserUpdateRequest
 from backend.routers.auth import require_admin, require_auth
 
 router = APIRouter(prefix="/api/users", tags=["users"])
@@ -49,10 +50,21 @@ def update_me(request: UserUpdateRequest, user: dict = Depends(require_auth)) ->
     updated = update_user(
         user["id"],
         display_name=request.display_name,
-        password=request.password,
         path=get_db_path(),
     )
     return UserPublic(**updated)
+
+
+@router.post("/me/password")
+def change_my_password(
+    request: ChangePasswordRequest, user: dict = Depends(require_auth)
+) -> dict:
+    if not verify_password(request.current_password, user["password_hash"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Contraseña actual incorrecta"
+        )
+    update_user(user["id"], password=request.new_password, path=get_db_path())
+    return {"status": "ok", "message": "Contraseña actualizada"}
 
 
 @router.patch("/{user_id}")

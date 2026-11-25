@@ -83,12 +83,17 @@ export const AiChatPanel = ({ board, boardId, onBoardUpdate, token }: AiChatPane
   };
 
   return (
-    <aside className="flex min-h-[520px] flex-col rounded-[8px] border border-[var(--stroke)] bg-white p-4 shadow-[var(--shadow)]">
-      <div className="border-b border-[var(--stroke)] pb-4">
-        <h2 className="text-base font-semibold text-[var(--navy-dark)]">Chat IA</h2>
-        <p className="mt-1 text-xs leading-5 text-[var(--gray-text)]">
-          Crea, edita o mueve tarjetas desde aquí.
-        </p>
+    <aside className="flex min-h-[520px] flex-col rounded-2xl border border-[var(--stroke)] bg-[var(--panel)] p-4 shadow-[var(--shadow)] backdrop-blur-xl">
+      <div className="flex items-center gap-2 border-b border-[var(--stroke)] pb-4">
+        <span className="h-2 w-2 rounded-full bg-[var(--secondary-purple)] shadow-[var(--glow-purple)]" />
+        <div>
+          <h2 className="font-mono text-sm font-semibold uppercase tracking-[0.2em] text-[var(--text)]">
+            Chat IA
+          </h2>
+          <p className="mt-1 text-xs leading-5 text-[var(--gray-text)]">
+            Crea, edita o mueve tarjetas desde aquí.
+          </p>
+        </div>
       </div>
 
       <div
@@ -96,7 +101,7 @@ export const AiChatPanel = ({ board, boardId, onBoardUpdate, token }: AiChatPane
         className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto py-4"
       >
         {messages.length === 0 ? (
-          <p className="rounded-[8px] border border-dashed border-[var(--stroke)] p-3 text-sm leading-6 text-[var(--gray-text)]">
+          <p className="rounded-lg border border-dashed border-[var(--stroke)] p-3 text-sm leading-6 text-[var(--gray-text)]">
             Pide un cambio del tablero o una recomendación breve.
           </p>
         ) : (
@@ -105,8 +110,8 @@ export const AiChatPanel = ({ board, boardId, onBoardUpdate, token }: AiChatPane
               key={`${message.role}-${index}`}
               className={
                 message.role === "user"
-                  ? "ml-6 rounded-[8px] bg-[var(--primary-blue)] px-3 py-2 text-sm leading-6 text-white"
-                  : "mr-6 rounded-[8px] bg-[var(--surface)] px-3 py-2 text-sm leading-6 text-[var(--navy-dark)]"
+                  ? "ml-6 rounded-lg bg-[var(--primary-blue)] px-3 py-2 text-sm leading-6 text-white"
+                  : "mr-6 rounded-lg border border-[var(--stroke)] bg-[var(--bg-deep)] px-3 py-2 text-sm leading-6 text-[var(--text)]"
               }
             >
               {message.content}
@@ -116,7 +121,7 @@ export const AiChatPanel = ({ board, boardId, onBoardUpdate, token }: AiChatPane
       </div>
 
       {error ? (
-        <p className="mb-3 rounded-[8px] border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+        <p className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
           {error}
         </p>
       ) : null}
@@ -127,12 +132,12 @@ export const AiChatPanel = ({ board, boardId, onBoardUpdate, token }: AiChatPane
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Escribe a la IA"
           aria-label="Mensaje para la IA"
-          className="min-h-24 resize-none rounded-[8px] border border-[var(--stroke)] bg-[var(--surface)] px-3 py-3 text-sm leading-6 outline-none transition focus:border-[var(--primary-blue)] focus:bg-white"
+          className="min-h-24 resize-none rounded-lg border border-[var(--stroke)] bg-[var(--bg-deep)] px-3 py-3 text-sm leading-6 text-[var(--text)] outline-none transition focus:border-[var(--primary-blue)] focus:shadow-[var(--glow-blue)]"
         />
         <button
           type="submit"
           disabled={isSending || !draft.trim()}
-          className="rounded-[8px] bg-[var(--secondary-purple)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--navy-dark)] disabled:cursor-not-allowed disabled:bg-[var(--gray-text)]"
+          className="rounded-lg bg-[var(--secondary-purple)] px-4 py-3 text-sm font-semibold text-white transition hover:shadow-[var(--glow-purple)] disabled:cursor-not-allowed disabled:bg-[var(--gray-text)] disabled:opacity-50"
         >
           {isSending ? "Enviando..." : "Enviar"}
         </button>

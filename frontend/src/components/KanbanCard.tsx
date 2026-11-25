@@ -22,9 +22,9 @@ export const KanbanCard = ({ card, onDelete }: KanbanCardProps) => {
       ref={setNodeRef}
       style={style}
       className={clsx(
-        "rounded-2xl border border-transparent bg-white px-4 py-4 shadow-[0_12px_24px_rgba(3,33,71,0.08)]",
-        "transition-all duration-150",
-        isDragging && "opacity-60 shadow-[0_18px_32px_rgba(3,33,71,0.16)]"
+        "rounded-xl border border-[var(--stroke)] bg-[var(--surface-strong)] px-4 py-4 shadow-[0_12px_24px_rgba(1,3,6,0.4)]",
+        "transition-all duration-150 hover:border-[var(--stroke-strong)]",
+        isDragging && "opacity-60 shadow-[var(--glow-blue)]"
       )}
       {...attributes}
       {...listeners}
@@ -32,7 +32,7 @@ export const KanbanCard = ({ card, onDelete }: KanbanCardProps) => {
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <h4 className="font-display text-base font-semibold text-[var(--navy-dark)]">
+          <h4 className="font-display text-base font-semibold text-[var(--text)]">
             {card.title}
           </h4>
           <p className="mt-2 text-sm leading-6 text-[var(--gray-text)]">
@@ -42,7 +42,7 @@ export const KanbanCard = ({ card, onDelete }: KanbanCardProps) => {
         <button
           type="button"
           onClick={() => onDelete(card.id)}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-transparent text-[var(--gray-text)] transition hover:border-[var(--stroke)] hover:bg-red-50 hover:text-red-600"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-transparent text-[var(--gray-text)] transition hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400"
           aria-label={`Eliminar ${card.title}`}
           title="Eliminar tarjeta"
         >

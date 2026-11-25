@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -50,8 +50,6 @@ export const KanbanBoard = ({ userId, token, role }: KanbanBoardProps) => {
       activationConstraint: { distance: 6 },
     })
   );
-
-  const cardsById = useMemo(() => board.cards, [board.cards]);
 
   useEffect(() => {
     const loadBoards = async () => {
@@ -108,10 +106,6 @@ export const KanbanBoard = ({ userId, token, role }: KanbanBoardProps) => {
     }
   };
 
-  const handleSelectBoard = (boardId: string) => {
-    setActiveBoardId(boardId);
-  };
-
   const handleCreateBoard = async (name: string) => {
     try {
       const created = await createBoard(token, name);
@@ -149,10 +143,6 @@ export const KanbanBoard = ({ userId, token, role }: KanbanBoardProps) => {
   const updateBoardState = (nextBoard: BoardData) => {
     setBoard(nextBoard);
     void saveBoard(nextBoard);
-  };
-
-  const handleAiBoardUpdate = (nextBoard: BoardData) => {
-    setBoard(nextBoard);
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -223,13 +213,13 @@ export const KanbanBoard = ({ userId, token, role }: KanbanBoardProps) => {
     });
   };
 
-  const activeCard = activeCardId ? cardsById[activeCardId] : null;
+  const activeCard = activeCardId ? board.cards[activeCardId] : null;
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#032147] via-[#209dd7]/10 to-[#753991]/10 px-4">
-        <div className="rounded-[32px] border border-[var(--stroke)] bg-white/95 p-8 shadow-[var(--shadow)]">
-          <p className="text-center text-sm text-[var(--gray-text)]">Cargando tablero...</p>
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="rounded-2xl border border-[var(--stroke)] bg-[var(--panel)] p-8 shadow-[var(--shadow)] backdrop-blur-xl">
+          <p className="text-center font-mono text-sm text-[var(--gray-text)]">Cargando tablero...</p>
         </div>
       </div>
     );
@@ -237,17 +227,17 @@ export const KanbanBoard = ({ userId, token, role }: KanbanBoardProps) => {
 
   return (
     <div className="relative overflow-hidden">
-      <div className="pointer-events-none absolute left-0 top-0 h-[420px] w-[420px] -translate-x-1/3 -translate-y-1/3 rounded-full bg-[radial-gradient(circle,_rgba(32,157,215,0.25)_0%,_rgba(32,157,215,0.05)_55%,_transparent_70%)]" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-[520px] w-[520px] translate-x-1/4 translate-y-1/4 rounded-full bg-[radial-gradient(circle,_rgba(117,57,145,0.18)_0%,_rgba(117,57,145,0.05)_55%,_transparent_75%)]" />
+      <div className="pointer-events-none absolute left-0 top-0 h-[420px] w-[420px] -translate-x-1/3 -translate-y-1/3 rounded-full bg-[radial-gradient(circle,_rgba(32,157,215,0.2)_0%,_rgba(32,157,215,0.04)_55%,_transparent_70%)]" />
+      <div className="pointer-events-none absolute bottom-0 right-0 h-[520px] w-[520px] translate-x-1/4 translate-y-1/4 rounded-full bg-[radial-gradient(circle,_rgba(117,57,145,0.16)_0%,_rgba(117,57,145,0.04)_55%,_transparent_75%)]" />
 
       <main className="relative mx-auto flex min-h-screen max-w-[1500px] flex-col gap-10 px-6 pb-16 pt-12">
-        <header className="flex flex-col gap-6 rounded-[32px] border border-[var(--stroke)] bg-white/80 p-8 shadow-[var(--shadow)] backdrop-blur">
+        <header className="flex flex-col gap-6 rounded-2xl border border-[var(--stroke)] bg-[var(--panel)] p-8 shadow-[var(--shadow)] backdrop-blur-xl">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[var(--gray-text)]">
-                Tablero Kanban Individual
+              <p className="font-mono text-[11px] uppercase tracking-[0.4em] text-[var(--accent-yellow)]">
+                Frogames Labs · Tablero Individual
               </p>
-              <h1 className="mt-3 font-display text-4xl font-semibold text-[var(--navy-dark)]">
+              <h1 className="mt-3 font-display text-4xl font-semibold text-[var(--text)]">
                 Kanban Studio
               </h1>
               <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--gray-text)]">
@@ -256,8 +246,8 @@ export const KanbanBoard = ({ userId, token, role }: KanbanBoardProps) => {
               </p>
             </div>
             <div className="flex items-start gap-3">
-              <div className="rounded-2xl border border-[var(--stroke)] bg-[var(--surface)] px-5 py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--gray-text)]">
+              <div className="rounded-xl border border-[var(--stroke)] bg-[var(--bg-deep)] px-5 py-4">
+                <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-[var(--gray-text)]">
                   Enfoque
                 </p>
                 <p className="mt-2 text-lg font-semibold text-[var(--primary-blue)]">
@@ -268,7 +258,7 @@ export const KanbanBoard = ({ userId, token, role }: KanbanBoardProps) => {
                 <button
                   type="button"
                   onClick={() => setIsManagingUsers(true)}
-                  className="rounded-full border border-[var(--stroke)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--navy-dark)] transition hover:border-[var(--primary-blue)]"
+                  className="rounded-lg border border-[var(--stroke)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--text)] transition hover:border-[var(--primary-blue)] hover:shadow-[var(--glow-blue)]"
                 >
                   Gestionar usuarios
                 </button>
@@ -279,7 +269,7 @@ export const KanbanBoard = ({ userId, token, role }: KanbanBoardProps) => {
           <BoardSwitcher
             boards={boards}
             activeBoardId={activeBoardId}
-            onSelect={handleSelectBoard}
+            onSelect={setActiveBoardId}
             onCreate={handleCreateBoard}
             onRename={handleRenameBoard}
             onDelete={handleDeleteBoard}
@@ -289,9 +279,9 @@ export const KanbanBoard = ({ userId, token, role }: KanbanBoardProps) => {
             {board.columns.map((column) => (
               <div
                 key={column.id}
-                className="flex items-center gap-2 rounded-full border border-[var(--stroke)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--navy-dark)]"
+                className="flex items-center gap-2 rounded-full border border-[var(--stroke)] bg-[var(--bg-deep)] px-4 py-2 font-mono text-xs uppercase tracking-[0.2em] text-[var(--text)]"
               >
-                <span className="h-2 w-2 rounded-full bg-[var(--accent-yellow)]" />
+                <span className="h-2 w-2 rounded-full bg-[var(--accent-yellow)] shadow-[var(--glow-yellow)]" />
                 {column.title}
               </div>
             ))}
@@ -299,7 +289,7 @@ export const KanbanBoard = ({ userId, token, role }: KanbanBoardProps) => {
         </header>
 
         {error ? (
-          <p className="rounded-[8px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
             {error}
           </p>
         ) : null}
@@ -312,10 +302,11 @@ export const KanbanBoard = ({ userId, token, role }: KanbanBoardProps) => {
             onDragEnd={handleDragEnd}
           >
             <section className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-              {board.columns.map((column) => (
+              {board.columns.map((column, index) => (
                 <KanbanColumn
                   key={column.id}
                   column={column}
+                  accentIndex={index}
                   cards={column.cardIds.map((cardId) => board.cards[cardId])}
                   onRename={handleRenameColumn}
                   onAddCard={handleAddCard}
@@ -336,7 +327,7 @@ export const KanbanBoard = ({ userId, token, role }: KanbanBoardProps) => {
             <AiChatPanel
               board={board}
               boardId={activeBoardId}
-              onBoardUpdate={handleAiBoardUpdate}
+              onBoardUpdate={setBoard}
               token={token}
             />
           ) : null}

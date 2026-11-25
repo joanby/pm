@@ -64,24 +64,24 @@ export const UserManagementPanel = ({ token, currentUserId, onClose }: UserManag
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-2xl rounded-[32px] border border-[var(--stroke)] bg-white p-8 shadow-[var(--shadow)]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-2xl rounded-2xl border border-[var(--stroke)] bg-[var(--panel-strong)] p-8 shadow-[var(--shadow)] backdrop-blur-xl">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="font-display text-2xl font-semibold text-[var(--navy-dark)]">
+          <h2 className="font-display text-2xl font-semibold text-[var(--text)]">
             Gestión de usuarios
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="rounded-full border border-[var(--stroke)] px-3 py-1 text-xs font-semibold uppercase text-[var(--gray-text)] hover:text-[var(--navy-dark)]"
+            className="rounded-full border border-[var(--stroke)] px-3 py-1 text-xs font-semibold uppercase text-[var(--gray-text)] hover:text-[var(--text)]"
           >
             Cerrar
           </button>
         </div>
 
         {error ? (
-          <p className="mb-4 rounded-[8px] border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+          <p className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-300">
             {error}
           </p>
         ) : null}
@@ -93,7 +93,7 @@ export const UserManagementPanel = ({ token, currentUserId, onClose }: UserManag
             placeholder="usuario"
             aria-label="Nombre de usuario"
             required
-            className="rounded-xl border border-[var(--stroke)] px-3 py-2 text-sm outline-none focus:border-[var(--primary-blue)]"
+            className="rounded-lg border border-[var(--stroke)] bg-[var(--bg-deep)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--primary-blue)] focus:shadow-[var(--glow-blue)]"
           />
           <input
             value={displayName}
@@ -101,7 +101,7 @@ export const UserManagementPanel = ({ token, currentUserId, onClose }: UserManag
             placeholder="Nombre visible"
             aria-label="Nombre visible"
             required
-            className="rounded-xl border border-[var(--stroke)] px-3 py-2 text-sm outline-none focus:border-[var(--primary-blue)]"
+            className="rounded-lg border border-[var(--stroke)] bg-[var(--bg-deep)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--primary-blue)] focus:shadow-[var(--glow-blue)]"
           />
           <input
             type="password"
@@ -110,12 +110,12 @@ export const UserManagementPanel = ({ token, currentUserId, onClose }: UserManag
             placeholder="contraseña"
             aria-label="Contraseña"
             required
-            className="rounded-xl border border-[var(--stroke)] px-3 py-2 text-sm outline-none focus:border-[var(--primary-blue)]"
+            className="rounded-lg border border-[var(--stroke)] bg-[var(--bg-deep)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--primary-blue)] focus:shadow-[var(--glow-blue)]"
           />
           <button
             type="submit"
             data-testid="add-user-button"
-            className="rounded-xl bg-[var(--secondary-purple)] px-3 py-2 text-sm font-semibold text-white transition hover:brightness-110"
+            className="rounded-lg bg-[var(--secondary-purple)] px-3 py-2 text-sm font-semibold text-white transition hover:shadow-[var(--glow-purple)]"
           >
             Añadir
           </button>
@@ -125,13 +125,13 @@ export const UserManagementPanel = ({ token, currentUserId, onClose }: UserManag
           {users.map((user) => (
             <li
               key={user.id}
-              className="flex items-center justify-between rounded-xl border border-[var(--stroke)] px-4 py-3"
+              className="flex items-center justify-between rounded-lg border border-[var(--stroke)] bg-[var(--bg-deep)] px-4 py-3"
             >
               <div>
-                <p className="text-sm font-semibold text-[var(--navy-dark)]">
+                <p className="text-sm font-semibold text-[var(--text)]">
                   {user.display_name ?? user.username}
                 </p>
-                <p className="text-xs text-[var(--gray-text)]">
+                <p className="font-mono text-xs text-[var(--gray-text)]">
                   @{user.username} · {user.role}
                 </p>
               </div>
@@ -139,7 +139,7 @@ export const UserManagementPanel = ({ token, currentUserId, onClose }: UserManag
                 <button
                   type="button"
                   onClick={() => handleToggleRole(user)}
-                  className="rounded-full border border-[var(--stroke)] px-3 py-1 text-xs font-semibold uppercase text-[var(--navy-dark)] hover:border-[var(--primary-blue)]"
+                  className="rounded-full border border-[var(--stroke)] px-3 py-1 text-xs font-semibold uppercase text-[var(--text)] hover:border-[var(--primary-blue)]"
                 >
                   {user.role === "admin" ? "Quitar admin" : "Hacer admin"}
                 </button>
@@ -147,7 +147,7 @@ export const UserManagementPanel = ({ token, currentUserId, onClose }: UserManag
                   <button
                     type="button"
                     onClick={() => handleDelete(user)}
-                    className="rounded-full border border-[var(--stroke)] px-3 py-1 text-xs font-semibold uppercase text-red-600 hover:border-red-300"
+                    className="rounded-full border border-[var(--stroke)] px-3 py-1 text-xs font-semibold uppercase text-red-400 hover:border-red-500/40"
                   >
                     Eliminar
                   </button>

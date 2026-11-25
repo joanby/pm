@@ -12,6 +12,9 @@ test("login and logout flow", async ({ page }) => {
   await expect(passwordInput).toBeVisible();
   await expect(submitButton).toContainText("Iniciar sesión");
 
+  // The login screen must not leak the seeded admin credentials.
+  await expect(page.getByText(/usuario \/ contraseña/i)).toHaveCount(0);
+
   // Fill in credentials
   await usernameInput.fill("usuario");
   await passwordInput.fill("contraseña");
@@ -31,4 +34,20 @@ test("login and logout flow", async ({ page }) => {
 
   // Verify we're back to login form
   await expect(usernameInput).toBeVisible({ timeout: 5000 });
+});
+
+test("a new user can register from the login screen and reach the board", async ({ page }) => {
+  const username = `e2e_register_${Date.now()}`;
+
+  await page.goto("http://localhost:8000/");
+  await page.getByRole("button", { name: "Regístrate" }).click();
+
+  await page.locator("input#username").fill(username);
+  await page.locator("input#displayName").fill("Usuario Registrado");
+  await page.locator("input#password").fill("clave-e2e-segura");
+  await page.getByRole("button", { name: "Crear cuenta" }).click();
+
+  await expect(page.getByRole("heading", { name: "Kanban Studio" })).toBeVisible({ timeout: 5000 });
+  // A newly registered member should not see the admin-only user management entry point.
+  await expect(page.getByRole("button", { name: "Gestionar usuarios" })).toHaveCount(0);
 });

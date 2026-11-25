@@ -59,7 +59,7 @@ export const BoardSwitcher = ({
               value={renameValue}
               onChange={(event) => setRenameValue(event.target.value)}
               onBlur={() => setRenamingId(null)}
-              className="rounded-full border border-[var(--primary-blue)] px-3 py-1.5 text-xs font-semibold outline-none"
+              className="rounded-full border border-[var(--primary-blue)] bg-[var(--bg-deep)] px-3 py-1.5 text-xs font-semibold text-[var(--text)] outline-none shadow-[var(--glow-blue)]"
             />
           </form>
         ) : (
@@ -75,8 +75,8 @@ export const BoardSwitcher = ({
               data-active={board.id === activeBoardId}
               className={
                 board.id === activeBoardId
-                  ? "rounded-full bg-[var(--primary-blue)] px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white"
-                  : "rounded-full border border-[var(--stroke)] px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--navy-dark)] transition hover:border-[var(--primary-blue)]"
+                  ? "rounded-full bg-[var(--primary-blue)] px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shadow-[var(--glow-blue)]"
+                  : "rounded-full border border-[var(--stroke)] px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--gray-text)] transition hover:border-[var(--primary-blue)] hover:text-[var(--text)]"
               }
             >
               {board.name}
@@ -86,7 +86,7 @@ export const BoardSwitcher = ({
                 type="button"
                 aria-label={`Eliminar ${board.name}`}
                 onClick={() => onDelete(board.id)}
-                className="ml-1 text-xs text-[var(--gray-text)] opacity-0 transition group-hover:opacity-100 hover:text-red-600"
+                className="ml-1 text-xs text-[var(--gray-text)] opacity-0 transition group-hover:opacity-100 hover:text-red-400"
               >
                 ✕
               </button>
@@ -104,7 +104,7 @@ export const BoardSwitcher = ({
             onBlur={() => setIsCreating(false)}
             placeholder="Nombre del tablero"
             aria-label="Nombre del nuevo tablero"
-            className="rounded-full border border-[var(--primary-blue)] px-3 py-1.5 text-xs font-semibold outline-none"
+            className="rounded-full border border-[var(--primary-blue)] bg-[var(--bg-deep)] px-3 py-1.5 text-xs font-semibold text-[var(--text)] outline-none shadow-[var(--glow-blue)]"
           />
         </form>
       ) : (
